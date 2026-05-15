@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>学生词</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0a0a1a; height: 100vh; width: 100vw; overflow: hidden; display: flex; justify-content: center; align-items: center; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; position: fixed; top: 0; left: 0; }
+        #gameContainer { width: 100%; max-width: 500px; height: 100dvh; max-height: 100dvh; position: relative; background: #1a1a2e; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.8); isolation: isolate; }
+        .tunnel-wall {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                /* Existing vertical lines */
+                repeating-linear-gradient(90deg, transparent 0px, transparent 155px, #333 155px, #333 160px, transparent 160px, transparent 165px, #333 165px, #333 170px, transparent 170px, transparent 325px, #333 325px, #333 330px, transparent 330px, transparent 335px, #333 335px, #333 340px), 
+                /* Existing gradient */
+                linear-gradient(to bottom, #2a2a3e 0%, #1a1a2e 30%, #0f0f1e 100%);
+        }
+
+        /* Add moving floor effect */
+        .tunnel-floor {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 35%;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 20px,
+                rgba(255,215,0,0.1) 20px,
+                rgba(255,215,0,0.1) 22px,
+                transparent 22px,
+                transparent 40px
+            );
+            animation: floorScroll 0.3s linear infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes floorScroll {
+            from { background-position: 0 0; }
+            to { background-position: 0 40px; }
+        }        
+        .light { position: absolute; width: 60px; height: 8px; background: linear-gradient(to bottom, #fff 0%, #ffeb3b 50%, #ff9800 100%); border-radius: 4px; top: 5%; box-shadow: 0 0 30px rgba(255,235,59,0.5); animation: flicker 3s infinite; }
+        .light:nth-child(1) { left: 12%; animation-delay: 0s; }
+        .light:nth-child(2) { left: 46%; animation-delay: 1s; }
+        .light:nth-child(3) { left: 80%; animation-delay: 2s; }
+        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .road-line-v { 
+        position: absolute; 
+        top: 0%; width: 
+        3px; height: 100%; 
+        background: repeating-linear-gradient(to bottom, #FFD700 0px, #FFD700 30px, transparent 30px, transparent 60px); opacity: 0.6; animation: roadScroll 0.5s linear infinite; }
+        @keyframes roadScroll { from { background-position: 0 0; } to { background-position: 0 60px; }  /* Must match gap size */}
+        .road-line-v.left { left: 33.33%; }
+        .road-line-v.right { left: 66.66%; }
+        .lane-label { position: absolute; bottom: 5%; font-size: 14px; color: rgba(255,255,255,0.3); font-weight: bold; text-align: center; width: 33.33%; }
+        .lane-label.left { left: 0; }
+        .lane-label.center { left: 33.33%; }
+        .lane-label.right { left: 66.66%; }
+        #runner { position: absolute; left: 50%; bottom: 15%; width: 80px; height: 120px; z-index: 20; transform: translateX(-50%); transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .runner-body { width: 55px; height: 75px; background: linear-gradient(to bottom, #FF4757 0%, #EE5A5A 100%); border-radius: 12px 12px 8px 8px; position: relative; margin: 0 auto; box-shadow: 0 5px 20px rgba(255,71,87,0.4); }
+        .runner-head { width: 40px; height: 40px; background: #FFD93D; border-radius: 50%; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .runner-cap { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 44px; height: 15px; background: #FF4757; border-radius: 20px 20px 0 0; }
+        .runner-eye { width: 7px; height: 7px; background: #333; border-radius: 50%; position: absolute; top: 14px; }
+        .runner-eye.left { left: 8px; }
+        .runner-eye.right { right: 8px; }
+        .runner-leg { width: 14px; height: 35px; background: #2C3E50; position: absolute; bottom: -30px; border-radius: 0 0 6px 6px; animation: run 0.3s infinite alternate; }
+        .runner-leg.left { left: 8px; }
+        .runner-leg.right { right: 8px; animation-delay: 0.15s; }
+        .runner-arm { width: 12px; height: 30px; background: #FF4757; position: absolute; top: 15px; border-radius: 6px; animation: armSwing 0.3s infinite alternate; }
+        .runner-arm.left { left: -8px; transform-origin: top center; animation-delay: 0.15s; }
+        .runner-arm.right { right: -8px; transform-origin: top center; }
+        @keyframes run { from { transform: rotate(-25deg) translateY(0); } to { transform: rotate(25deg) translateY(-5px); } }
+        @keyframes armSwing { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+        .runner-char-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #FFD700; font-size: 16px; font-weight: bold; padding: 4px 10px; border-radius: 8px; border: 2px solid #FFD700; white-space: nowrap; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .door-track { position: absolute; top: -150px; width: 100%; height: 100%; pointer-events: none; }
+        .gate-item { position: absolute; width: 33.33%; height: 8px; cursor: pointer; pointer-events: auto; z-index: 10; }
+        .gate-pillar { position: absolute; width: 8px; height: 60px; background: linear-gradient(to bottom, #555, #333); top: -60px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .gate-pillar.left { left: 15%; }
+        .gate-pillar.right { right: 15%; }
+        .gate-arm { position: absolute; top: -4px; left: 15%; right: 15%; height: 8px; background: repeating-linear-gradient(90deg, #FF4757 0px, #FF4757 15px, #fff 15px, #fff 30px); border-radius: 4px; box-shadow: 0 2px 10px rgba(255,71,87,0.4); transform-origin: left center; transition: transform 0.3s; border: 1px solid rgba(255,255,255,0.3); }
+        .gate-label { position: absolute; top: -90px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #FFD700; font-size: 13px; font-weight: bold; padding: 6px 14px; border-radius: 10px; border: 2px solid #FFD700; white-space: nowrap; text-align: center; box-shadow: 0 0 15px rgba(255,215,0,0.3); line-height: 1.3; min-width: 80px; }
+        .gate-label-id { color: #FF4757; font-size: 11px; display: block; margin-bottom: 3px; }
+        .gate-glow { position: absolute; top: -70px; left: 5%; right: 5%; height: 70px; border-radius: 10px; border: 2px solid transparent; animation: gatePulse 2s infinite; pointer-events: none; }
+        @keyframes gatePulse { 0%, 100% { border-color: transparent; box-shadow: none; } 50% { border-color: rgba(255,215,0,0.3); box-shadow: 0 0 20px rgba(255,215,0,0.2); } }
+        .gate-item:hover .gate-arm { box-shadow: 0 0 20px rgba(255,71,87,0.6); }
+        .gate-open .gate-arm { transform: rotate(-75deg); transition: transform 0.5s ease-out; }
+        .gate-break .gate-arm { animation: gateBreak 0.4s forwards; }
+        @keyframes gateBreak { 0% { transform: rotate(0deg); } 30% { transform: rotate(15deg); } 60% { transform: rotate(-30deg) translateY(5px); } 100% { transform: rotate(45deg) translateY(20px); opacity: 0; } }
+        .correct-glow .gate-glow { border-color: #00E676 !important; box-shadow: 0 0 30px rgba(0,230,118,0.5) !important; }
+        .correct-glow .gate-arm { background: repeating-linear-gradient(90deg, #00E676 0px, #00E676 15px, #fff 15px, #fff 30px) !important; }
+        .wrong-glow .gate-glow { border-color: #FF4757 !important; box-shadow: 0 0 30px rgba(255,71,87,0.5) !important; }
+        .wrong-glow .gate-arm { background: repeating-linear-gradient(90deg, #FF4757 0px, #FF4757 15px, #8B0000 15px, #8B0000 30px) !important; }
+        .speed-line { position: absolute; width: 2px; background: rgba(255,255,255,0.1); animation: speedMove 0.5s linear infinite; }
+        @keyframes speedMove { from { transform: translateY(-100px); } to { transform: translateY(900px); } }
+        #ui { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 30; }
+        .ui-box { background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 16px; font-weight: bold; border: 1px solid rgba(255,215,0,0.3); }
+        .ui-box span { color: #FFD700; }
+        #timerBar { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); width: 200px; height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; overflow: hidden; z-index: 30; border: 1px solid rgba(255,255,255,0.1); }
+        #timerFill { height: 100%; background: linear-gradient(to right, #00E676, #FFD700, #FF4757); border-radius: 3px; transition: width 0.1s linear; }
+        .score-popup { position: absolute; color: #FFD700; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); animation: scoreUp 1s forwards; pointer-events: none; z-index: 50; }
+        @keyframes scoreUp { to { transform: translateY(-80px); opacity: 0; } }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: rgba(10,10,26,0.95); }
+        .screen.hidden { display: none; }
+        .screen h1 { color: #FFD700; font-size: 42px; margin-bottom: 15px; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+        .screen h2 { color: #FF4757; font-size: 32px; margin-bottom: 15px; }
+        .screen p { color: #ccc; font-size: 18px; margin-bottom: 8px; text-align: center; max-width: 400px; line-height: 1.5; }
+        .btn { padding: 14px 36px; font-size: 22px; font-weight: bold; border: none; border-radius: 30px; cursor: pointer; margin: 8px; transition: all 0.3s; font-family: 'Segoe UI', sans-serif; }
+        .btn-start { background: linear-gradient(to bottom, #00E676, #00C853); color: white; box-shadow: 0 4px 15px rgba(0,230,118,0.4); }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,230,118,0.6); }
+        .btn-retry { background: linear-gradient(to bottom, #FF4757, #EE5A5A); color: white; box-shadow: 0 4px 15px rgba(255,71,87,0.4); }
+        .btn-retry:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,71,87,0.6); }
+        @keyframes shake { 0%, 100% { transform: translateX(-50%) translateX(0); } 25% { transform: translateX(-50%) translateX(-10px); } 75% { transform: translateX(-50%) translateX(10px); } }
+        #gameContainer.shake { animation: screenShake 0.3s; }
+        @keyframes screenShake { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-5px, -3px); } 20% { transform: translate(5px, 3px); } 30% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 50% { transform: translate(-3px, 3px); } 60% { transform: translate(3px, -3px); } 70% { transform: translate(-2px, 1px); } 80% { transform: translate(2px, -1px); } 90% { transform: translate(-1px, 2px); } }
+        .shake { animation: shake 0.4s; }
+        @keyframes fall { to { transform: translateX(-50%) translateY(400px) rotate(180deg); opacity: 0; } }
+        .fall { animation: fall 0.8s forwards; }
+        @keyframes celebrate { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-15px); } }
+        .celebrate { animation: celebrate 0.4s infinite; }
+        .confetti { position: absolute; width: 8px; height: 8px; animation: confetti-fall 2.5s linear forwards; }
+        @keyframes confetti-fall { to { transform: translateY(900px) rotate(720deg); opacity: 0; } }
+        .instructions { margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,215,0,0.2); }
+        .instructions p { font-size: 14px; color: #aaa; margin: 4px 0; }
+        .key-hint { display: inline-block; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 5px; margin: 0 3px; font-size: 13px; color: #FFD700; }
+        .swipe-hint { margin-top: 20px; font-size: 14px; color: #666; }
+        .flash-red { animation: flashRed 0.3s; }
+        @keyframes flashRed { 0%, 100% { background: transparent; } 50% { background: rgba(255,0,0,0.3); } }
+        .correct-glow { box-shadow: 0 0 30px rgba(0,230,118,0.6) !important; border-color: #00E676 !important; }
+        .wrong-glow { box-shadow: 0 0 30px rgba(255,71,87,0.6) !important; border-color: #FF4757 !important; }
+        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
+        .wall-scroll {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.03) 0px,
+                rgba(255,255,255,0.03) 100px,
+                transparent 100px,
+                transparent 200px
+            );
+            animation: wallMove 1s linear infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes wallMove {
+            from { background-position: 0 0; }
+            to { background-position: 0 200px; }
+        }
+        /* BOSS FIGHT STYLES */
+        #bossTank { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); width: 120px; height: 100px; z-index: 25; display: none; }
+        .tank-body { width: 100%; height: 70px; background: linear-gradient(to bottom, #4a4a4a 0%, #2c2c2c 100%); border-radius: 10px 10px 5px 5px; border: 3px solid #666; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.6); animation: tankShake 0.15s infinite; }
+        .tank-turret { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 30px; background: linear-gradient(to bottom, #555, #333); border-radius: 8px 8px 0 0; border: 2px solid #777; }
+        .tank-barrel { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 12px; height: 35px; background: linear-gradient(to right, #444, #666, #444); border-radius: 4px; border: 1px solid #888; }
+        .tank-track { position: absolute; bottom: -10px; width: 30px; height: 20px; background: repeating-linear-gradient(to bottom, #333 0px, #333 3px, #111 3px, #111 6px); border-radius: 4px; border: 1px solid #555; }
+        .tank-track.left { left: 5px; }
+        .tank-track.right { right: 5px; }
+        .tank-eye { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 24px; height: 16px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 15px rgba(255,0,0,0.8), inset 0 0 8px rgba(255,100,100,0.5); animation: eyePulse 0.5s infinite alternate; }
+        @keyframes tankShake { 0% { transform: translateX(-2px) rotate(-1deg); } 25% { transform: translateX(2px) rotate(1deg); } 50% { transform: translateX(-1px) rotate(-0.5deg); } 75% { transform: translateX(1px) rotate(0.5deg); } 100% { transform: translateX(-2px) rotate(-1deg); } }
+        @keyframes eyePulse { from { box-shadow: 0 0 15px rgba(255,0,0,0.6); } to { box-shadow: 0 0 25px rgba(255,0,0,1), 0 0 40px rgba(255,0,0,0.4); } }
+        #bossHealthBar { position: absolute; top: 2%; left: 50%; transform: translateX(-50%); width: 250px; height: 14px; background: rgba(0,0,0,0.7); border-radius: 7px; border: 2px solid #ff4757; z-index: 30; display: none; overflow: hidden; }
+        #bossHealthFill { height: 100%; width: 100%; background: linear-gradient(to right, #ff4757, #ff6b6b); border-radius: 5px; transition: width 0.3s ease; }
+        #bossHealthText { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); color: #ff4757; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); white-space: nowrap; }
+        .bullet { position: absolute; width: 10px; height: 20px; border-radius: 50%; z-index: 22; pointer-events: none; }
+        .bullet-boss { background: linear-gradient(to bottom, #ff4757, #ff0000); box-shadow: 0 0 10px rgba(255,71,87,0.8); }
+        .bullet-runner { background: linear-gradient(to bottom, #00E676, #00C853); box-shadow: 0 0 10px rgba(0,230,118,0.8); width: 8px; height: 16px; }
+        #shootBtn { position: absolute; bottom: 20px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%); border: 3px solid #ffd700; color: white; font-size: 28px; font-weight: bold; display: none; align-items: center; justify-content: center; z-index: 40; box-shadow: 0 4px 20px rgba(255,71,87,0.5); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+        #shootBtn:active { transform: scale(0.9); box-shadow: 0 2px 10px rgba(255,71,87,0.3); }
+        #shootBtn::before { content: '\1F525'; }
+        #bossScreen { background: rgba(10,10,26,0.98); }
+        #bossScreen h1 { color: #ff4757; text-shadow: 0 0 30px rgba(255,71,87,0.6); animation: bossTitlePulse 1s infinite alternate; }
+        @keyframes bossTitlePulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        .boss-intro-text { color: #ff6b6b; font-size: 20px; margin: 10px 0; text-align: center; }
+        .boss-damage { animation: bossDamage 0.2s; }
+        @keyframes bossDamage { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(3) sepia(1) hue-rotate(-50deg) saturate(5); } }
+        .explosion { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, #ffeb3b 0%, #ff9800 40%, #ff4757 70%, transparent 100%); z-index: 50; animation: explode 0.4s forwards; pointer-events: none; }
+        @keyframes explode { 0% { transform: scale(0); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
+        .spark { position: absolute; width: 20px; height: 20px; background: #ffd700; border-radius: 50%; z-index: 45; animation: sparkFade 0.3s forwards; pointer-events: none; }
+        @keyframes sparkFade { 0% { transform: scale(1); opacity: 1; box-shadow: 0 0 20px #ffd700; } 100% { transform: scale(0); opacity: 0; } }
+
+        /* ================= SHIELD PHASE STYLES ================= */
+        #pinyinDisplay { position: absolute; top: 18%; left: 50%; transform: translateX(-50%); z-index: 65; display: none; flex-direction: column; align-items: center; gap: 8px; }
+        #pinyinLabel { color: #ff4757; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); letter-spacing: 2px; }
+        #pinyinText { color: #FFD700; font-size: 36px; font-weight: bold; text-shadow: 0 0 20px rgba(255,215,0,0.6), 2px 2px 4px rgba(0,0,0,0.8); padding: 10px 30px; background: rgba(0,0,0,0.6); border-radius: 15px; border: 2px solid #FFD700; animation: pinyinPulse 1s infinite alternate; }
+        @keyframes pinyinPulse { from { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.3); } to { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,215,0,0.6); } }
+
+        #bossShield { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; border-radius: 20px; border: 3px solid #00E5FF; background: rgba(0, 229, 255, 0.15); z-index: 26; display: none; animation: shieldPulse 0.8s infinite alternate; pointer-events: none; }
+        #bossShield::before { content: '\1F6E1 SHIELD ACTIVE'; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: #00E5FF; font-size: 12px; font-weight: bold; white-space: nowrap; text-shadow: 0 0 10px rgba(0,229,255,0.8); }
+        @keyframes shieldPulse { from { border-color: rgba(0,229,255,0.5); box-shadow: 0 0 15px rgba(0,229,255,0.3); } to { border-color: rgba(0,229,255,1); box-shadow: 0 0 30px rgba(0,229,255,0.6), inset 0 0 20px rgba(0,229,255,0.2); } }
+
+        #charOptionsContainer { position: absolute; bottom: 12%; left: 0; width: 100%; display: none; justify-content: space-around; align-items: center; z-index: 65; padding: 0 20px; }
+        .char-option { width: 90px; height: 90px; background: linear-gradient(135deg, #1a1a3e 0%, #0f0f2e 100%); border: 3px solid #FFD700; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 20px rgba(255,215,0,0.2); position: relative; }
+        .char-option:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,215,0,0.5); border-color: #00E676; }
+        .char-option .char-text { font-size: 32px; color: #FFD700; font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .char-option .char-label { font-size: 12px; color: #888; margin-top: 4px; }
+        .char-option.highlighted { border-color: #00E676; box-shadow: 0 0 25px rgba(0,230,118,0.6); background: linear-gradient(135deg, #1a3e1a 0%, #0f2e0f 100%); }
+        .char-option.wrong { border-color: #FF4757; box-shadow: 0 0 25px rgba(255,71,87,0.6); background: linear-gradient(135deg, #3e1a1a 0%, #2e0f0f 100%); animation: wrongShake 0.4s; }
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+        #arrowIndicator { position: absolute; bottom: 3%; left: 50%; transform: translateX(-50%); z-index: 65; display: none; flex-direction: column; align-items: center; gap: 5px; }
+        #arrowIndicator .arrow-key { background: rgba(255,255,255,0.15); border: 2px solid #FFD700; border-radius: 8px; padding: 6px 14px; color: #FFD700; font-size: 18px; font-weight: bold; animation: arrowBounce 0.8s infinite alternate; }
+        #arrowIndicator .arrow-hint { color: #aaa; font-size: 12px; }
+        @keyframes arrowBounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+        .flying-char { position: absolute; font-size: 40px; font-weight: bold; color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.8); z-index: 70; pointer-events: none; animation: flyToBoss 0.8s forwards ease-in; }
+        @keyframes flyToBoss { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(0.5) translateY(-300px); opacity: 0; } }
+
+        .shockwave { position: absolute; width: 100%; height: 8px; background: linear-gradient(to right, transparent, #ff4757, #ff0000, #ff4757, transparent); z-index: 70; border-radius: 4px; box-shadow: 0 0 20px rgba(255,71,87,0.8), 0 0 40px rgba(255,0,0,0.4); animation: shockwaveMove 0.6s linear forwards; pointer-events: none; }
+        @keyframes shockwaveMove { 0% { top: 15%; opacity: 1; transform: scaleX(0.5); } 50% { transform: scaleX(1); } 100% { top: 80%; opacity: 0; transform: scaleX(1.5); } }
+
+        .shield-break { position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px; border-radius: 25px; border: 4px solid #00E5FF; z-index: 27; pointer-events: none; animation: shieldBreakAnim 0.6s forwards; }
+        @keyframes shieldBreakAnim { 0% { transform: scale(1); opacity: 1; border-width: 4px; } 50% { transform: scale(1.2); opacity: 0.8; border-width: 8px; box-shadow: 0 0 50px #00E5FF; } 100% { transform: scale(1.5); opacity: 0; border-width: 0px; } }
+
+        #shieldTimerBar { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); width: 180px; height: 6px; background: rgba(0,0,0,0.6); border-radius: 3px; overflow: hidden; z-index: 65; display: none; border: 1px solid rgba(255,71,87,0.3); }
+        #shieldTimerFill { height: 100%; background: linear-gradient(to right, #ff4757, #ff9800); border-radius: 3px; transition: width 0.1s linear; width: 100%; }
+        #truckShieldEffect {
+            position: absolute;
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 20px;  /* Leave room for badge below */
+            border-radius: 12px;
+            border: 2px solid #00E5FF;
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 229, 255, 0.12) 0%, rgba(0, 229, 255, 0.04) 60%, transparent 80%),
+                repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0, 229, 255, 0.02) 8px, rgba(0, 229, 255, 0.02) 16px);
+            z-index: 25;
+            display: none;
+            animation: truckShieldPulse 1.2s infinite alternate;
+            pointer-events: none;
+            box-shadow: 
+                0 0 12px rgba(0, 229, 255, 0.25),
+                inset 0 0 20px rgba(0, 229, 255, 0.08),
+                0 0 30px rgba(0, 229, 255, 0.08);
+        }
+
+        #truckShieldEffect::before {
+            content: '🛡️';
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.8));
+            animation: shieldIconFloat 1.5s ease-in-out infinite;
+        }
+
+        #truckShieldEffect::after {
+            content: '';
+            position: absolute;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            border-radius: 15px;
+            border: 1px dashed rgba(0, 229, 255, 0.3);
+            animation: shieldRotate 8s linear infinite;
+        }
+
+        @keyframes truckShieldPulse {
+            from { 
+                border-color: rgba(0, 229, 255, 0.35); 
+                box-shadow: 0 0 8px rgba(0, 229, 255, 0.15), inset 0 0 15px rgba(0, 229, 255, 0.04);
+                transform: scale(1);
+            }
+            to { 
+                border-color: rgba(0, 229, 255, 0.8); 
+                box-shadow: 0 0 20px rgba(0, 229, 255, 0.35), inset 0 0 30px rgba(0, 229, 255, 0.12), 0 0 40px rgba(0, 229, 255, 0.15);
+                transform: scale(1.01);
+            }
+        }
+
+        @keyframes shieldIconFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-4px); }
+        }
+
+        /* Shield hit flash effect */
+        .shield-hit-flash {
+            animation: shieldHitFlash 0.4s ease-out;
+        }
+
+        @keyframes shieldHitFlash {
+            0% { 
+                border-color: #ffffff !important;
+                box-shadow: 0 0 50px rgba(255, 255, 255, 0.8), inset 0 0 50px rgba(255, 255, 255, 0.3) !important;
+                background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
+            }
+            50% {
+                border-color: #ff4757 !important;
+                box-shadow: 0 0 40px rgba(255, 71, 87, 0.5) !important;
+            }
+            100% {
+                border-color: rgba(0, 229, 255, 0.9);
+                box-shadow: 0 0 35px rgba(0, 229, 255, 0.5), inset 0 0 40px rgba(0, 229, 255, 0.15);
+            }
+        }
+
+        /* Shield breaking effect */
+        .shield-break-effect {
+            animation: shieldBreakAnim 0.6s forwards !important;
+        }
+
+        @keyframes shieldBreakAnim {
+            0% { 
+                transform: scale(1); 
+                opacity: 1; 
+                border-width: 3px;
+                border-color: #00E5FF;
+            }
+            30% {
+                transform: scale(1.1);
+                opacity: 0.8;
+                border-width: 6px;
+                border-color: #ffffff;
+                box-shadow: 0 0 60px rgba(0, 229, 255, 0.8);
+            }
+            60% {
+                transform: scale(1.3);
+                opacity: 0.4;
+                border-width: 2px;
+                border-color: #ff4757;
+            }
+            100% { 
+                transform: scale(1.5); 
+                opacity: 0; 
+                border-width: 0px;
+                border-color: transparent;
+            }
+        }        
+    
+        /* CAR SELECTION STYLES */
+        .car-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .car-card {
+            width: 130px;
+            background: linear-gradient(135deg, #1a1a3e 0%, #0f0f2e 100%);
+            border: 3px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .car-card:hover {
+            transform: translateY(-5px);
+            border-color: #FFD700;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .car-card.selected {
+            border-color: #00E676;
+            box-shadow: 0 0 25px rgba(0, 230, 118, 0.4);
+            background: linear-gradient(135deg, #1a3e1a 0%, #0f2e0f 100%);
+        }
+
+        .car-preview {
+            width: 100%;
+            height: 80px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .car-name {
+            color: #FFD700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .car-stats {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .car-stats span {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .stat-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar div {
+            height: 100%;
+            background: linear-gradient(to right, #00E676, #FFD700);
+            border-radius: 3px;
+        }
+
+        /* SPORTS CAR PREVIEW */
+        .sports-car {
+            background: linear-gradient(to bottom, #FF4757 0%, #c0392b 100%);
+            border-radius: 20px 20px 8px 8px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .sports-car::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            height: 25px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+        }
+
+        .sports-car::after {
+            content: '🏎️';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+        }
+
+        /* CLASSIC CAR PREVIEW */
+        .classic-car {
+            background: linear-gradient(to bottom, #3498db 0%, #2980b9 100%);
+            border-radius: 15px 15px 8px 8px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .classic-car::after {
+            content: '🚗';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+        }
+
+        /* TRUCK PREVIEW */
+        .truck-car {
+            background: linear-gradient(to bottom, #f39c12 0%, #d68910 100%);
+            border-radius: 10px 10px 8px 8px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .truck-car::after {
+            content: '🚚';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+        }
+
+        /* ================= RUNNER CAR STYLES ================= */
+        /* Replace the entire RUNNER CAR STYLES section with this */
+        #runner.car-mode {
+            width: 80px;
+            height: 100px;
+            bottom: 20%;
+        }
+
+        #runner.car-mode .runner-body {
+            display: none;
+        }
+
+        .car-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #carImage {
+            width: 100%;
+            height: auto;
+            max-height: 80px;
+            object-fit: contain;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+        }
+
+        .car-badge {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #FFD700;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 2px solid #FFD700;
+            white-space: nowrap;
+            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+
+        /* Car exhaust flame */
+        .car-exhaust {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 15px;
+            background: linear-gradient(to top, #ff6b35, #ffd700, transparent);
+            border-radius: 50% 50% 0 0;
+            opacity: 0.8;
+            animation: exhaustFlicker 0.2s infinite alternate;
+        }
+
+        @keyframes exhaustFlicker {
+            from { height: 10px; opacity: 0.6; }
+            to { height: 20px; opacity: 1; }
+        }
+
+        /* Car shake animation */
+        #runner.car-mode.shake {
+            animation: carShake 0.4s;
+        }
+
+        @keyframes carShake {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            25% { transform: translateX(-50%) rotate(-5deg) translateY(-2px); }
+            75% { transform: translateX(-50%) rotate(5deg) translateY(-2px); }
+        }
+
+        /* Replace the existing car celebrate/jump animation with this */
+        #runner.car-mode.celebrate {
+            animation: carTurbo 0.6s infinite;
+        }
+
+        @keyframes carTurbo {
+            0% { transform: translateX(-50%) translateY(0) scale(1); }
+            20% { transform: translateX(-50%) translateY(-5px) scale(1.05); }
+            40% { transform: translateX(-50%) translateY(0) scale(1); }
+            60% { transform: translateX(-50%) translateY(-3px) scale(1.03); }
+            100% { transform: translateX(-50%) translateY(0) scale(1); }
+        }
+
+        /* Add exhaust flame burst during turbo */
+        #runner.car-mode.celebrate .car-exhaust {
+            animation: exhaustTurbo 0.1s infinite alternate;
+        }
+
+        @keyframes exhaustTurbo {
+            from { height: 15px; opacity: 0.9; box-shadow: 0 0 10px #ff6b35; }
+            to { height: 35px; opacity: 1; box-shadow: 0 0 25px #ffd700, 0 0 40px #ff6b35; }
+        }
+
+        /* ================= TURBO TRAIL EFFECT ================= */
+        .turbo-trail {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 18;
+            overflow: visible;
+        }
+
+        .trail-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: trailFade 0.4s forwards ease-out;
+        }
+
+        .trail-particle.red {
+            background: radial-gradient(circle, #ff4757 0%, #ff6b6b 40%, transparent 70%);
+            box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+        }
+
+        .trail-particle.orange {
+            background: radial-gradient(circle, #ff9800 0%, #ff6b35 40%, transparent 70%);
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+        }
+
+        .trail-particle.yellow {
+            background: radial-gradient(circle, #ffd700 0%, #ffeb3b 40%, transparent 70%);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+
+        .trail-particle.blue {
+            background: radial-gradient(circle, #00e5ff 0%, #00b8d4 40%, transparent 70%);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+        }
+
+        .trail-streak {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #ff4757, #ff9800, #ffd700, transparent);
+            border-radius: 2px;
+            pointer-events: none;
+            animation: streakFade 0.3s forwards ease-out;
+            box-shadow: 0 0 6px rgba(255, 71, 87, 0.5);
+        }
+
+        @keyframes trailFade {
+            0% { transform: scale(1) translateY(0); opacity: 0.9; }
+            50% { transform: scale(1.5) translateY(10px); opacity: 0.5; }
+            100% { transform: scale(2) translateY(25px); opacity: 0; }
+        }
+
+        @keyframes streakFade {
+            0% { transform: scaleX(1) translateY(0); opacity: 0.8; }
+            100% { transform: scaleX(0.3) translateY(40px); opacity: 0; }
+        }
+
+        /* Exhaust flame burst during turbo */
+        #runner.car-mode.turbo-active .car-exhaust {
+            animation: exhaustTurboBurst 0.08s infinite alternate;
+        }
+
+        @keyframes exhaustTurboBurst {
+            from { 
+                height: 20px; 
+                opacity: 0.9; 
+                box-shadow: 0 0 15px #ff6b35, 0 0 30px #ffd700; 
+            }
+            to { 
+                height: 45px; 
+                opacity: 1; 
+                box-shadow: 0 0 30px #ff4757, 0 0 50px #ffd700, 0 0 80px #ff6b35; 
+            }
+        }
+
+        /* Car shake during turbo */
+        #runner.car-mode.turbo-active {
+            animation: carTurboShake 0.15s infinite;
+        }
+
+        @keyframes carTurboShake {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+            25% { transform: translateX(-50%) translateY(-1px) rotate(-0.5deg); }
+            75% { transform: translateX(-50%) translateY(-1px) rotate(0.5deg); }
+        }        
+
+        /* Replace the existing car fall animation with this */
+        #runner.car-mode.fall {
+            animation: carExplode 0.8s forwards;
+        }
+
+        @keyframes carExplode {
+            0% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+            30% { transform: translateX(-50%) translateY(-10px) scale(1.1); opacity: 1; }
+            50% { transform: translateX(-50%) translateY(0) scale(0.9); opacity: 0.8; }
+            70% { transform: translateX(-50%) translateY(5px) scale(1.2); opacity: 0.6; filter: brightness(3) sepia(1) hue-rotate(-30deg); }
+            100% { transform: translateX(-50%) translateY(20px) scale(0); opacity: 0; }
+        }
+        
+    
+        /* ================= MOBILE CONTROL BUTTONS ================= */
+        #mobileControls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            z-index: 50;
+            display: none;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: all 0.1s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-btn-left {
+            bottom: 25px;
+            left: 15px;
+        }
+
+        .mobile-btn-right {
+            bottom: 25px;
+            right: 15px;
+        }
+
+        .mobile-btn-slowmo {
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            border-color: #00E676;
+            color: #00E676;
+            background: rgba(0, 230, 118, 0.15);
+        }
+
+        .mobile-btn-slowmo:active {
+            transform: translateX(-50%) scale(0.92);
+        }
+
+        .mobile-btn-slowmo.disabled {
+            opacity: 0.3;
+            border-color: #666;
+            color: #666;
+        }
+
+        .mobile-btn-turbo {
+            bottom: 100px;
+            right: 15px;
+            width: 65px;
+            height: 65px;
+            font-size: 26px;
+            border-color: #FF4757;
+            color: #FF4757;
+            background: rgba(255, 71, 87, 0.15);
+            display: none;
+        }
+
+        .mobile-btn-turbo.active {
+            display: flex;
+            animation: turboBtnPulse 0.5s infinite alternate;
+        }
+
+        .mobile-btn-turbo.cooldown {
+            border-color: #666;
+            color: #666;
+            background: rgba(100, 100, 100, 0.15);
+            animation: none;
+        }
+
+        @keyframes turboBtnPulse {
+            from { box-shadow: 0 0 10px rgba(255, 71, 87, 0.3); }
+            to { box-shadow: 0 0 25px rgba(255, 71, 87, 0.6); }
+        }
+
+        /* Mobile skill count badge on slow-mo button */
+        .slowmo-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            background: #00E676;
+            color: #000;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #1a1a2e;
+        }
+
+        /* Show mobile controls on touch devices and small screens */
+        @media (max-width: 768px), (hover: none) {
+            #mobileControls {
+                display: block;
+            }
+
+            .lane-label {
+                bottom: 130px;
+            }
+
+            #runner {
+                bottom: 25%;
+            }
+
+            #runner.car-mode {
+                bottom: 28%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="light"></div>
+        <div class="light"></div>
+        <div class="light"></div>
+        <div class="road-line-v left"></div>
+        <div class="road-line-v right"></div>
+        <div class="lane-label left">← 左</div>
+        <div class="lane-label center">↓ 中</div>
+        <div class="lane-label right">右 →</div>
+
+        <div class="lane-highlight left" id="laneHighlight0"></div>
+        <div class="lane-highlight center" id="laneHighlight1"></div>
+        <div class="lane-highlight right" id="laneHighlight2"></div>
+
+        <div id="speedLines"></div>
+
+        <div id="ui">
+            <div class="ui-box">Level: <span id="level">1</span>/<span id="total">32</span></div>
+            <div class="ui-box">Score: <span id="score">0</span></div>
+        </div>
+
+        <div id="timerBar"><div id="timerFill" style="width: 100%;"></div></div>
+
+        <div id="heartsDisplay" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; gap: 8px; font-size: 28px;">
+            <span class="heart-icon">❤️</span>
+            <span class="heart-icon">❤️</span>
+            <span class="heart-icon">❤️</span>
+        </div>
+
+        <div id="skillIndicator" style="position: absolute; top: 75px; left: 50%; transform: translateX(-50%); z-index: 30; display: none; align-items: center; gap: 8px; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 20px; border: 2px solid #00E676; box-shadow: 0 0 15px rgba(0,230,118,0.4);">
+            <span style="font-size: 24px;">⏱️</span>
+            <span style="color: #00E676; font-weight: bold; font-size: 14px;">SLOW MO READY!</span>
+            <span style="color: #aaa; font-size: 12px;">(↓ Slow Mo)</span>
+        </div>
+
+        <div id="skillActive" style="position: absolute; top: 75px; left: 50%; transform: translateX(-50%); z-index: 30; display: none; align-items: center; gap: 8px; background: rgba(0,230,118,0.2); padding: 8px 16px; border-radius: 20px; border: 2px solid #00E676; animation: pulse 0.5s infinite;">
+            <span style="font-size: 24px;">⏳</span>
+            <span style="color: #00E676; font-weight: bold; font-size: 14px;">SLOW MOTION!</span>
+        </div>
+
+        <!-- TURBO INDICATOR (Sports Car) -->
+        <div id="turboIndicator">
+            <span>🔥</span>
+            <span class="turbo-text">TURBO ACTIVE!</span>
+            <span class="turbo-hint">(2x Speed)</span>
+        </div>
+
+        <!-- SHIELD ARMOR INDICATOR (Truck) -->
+        <div id="shieldArmorIndicator">
+            <span>🛡️</span>
+            <span class="shield-text">ARMOR ACTIVE!</span>
+        </div>
+
+        <!-- TRUCK SLOW BADGE -->
+        <div class="truck-slow-badge" id="truckSlowBadge">
+            🐢 SLOW MODE
+        </div>
+
+        <div id="runner" class="car-mode">
+            <div id="truckShieldEffect"></div>
+            <div class="turbo-trail" id="turboTrail"></div>
+            <div class="car-body">
+                <img id="carImage" src="car_sport.png" alt="car">
+                <div class="car-exhaust"></div>
+                <div class="car-badge" id="runnerChar">学艺</div>
+            </div>
+        </div>
+
+        <div class="door-track" id="doorTrack"></div>
+
+        <!-- SHIELD PHASE UI -->
+        <div id="pinyinDisplay">
+            <div id="pinyinLabel">TEMUKAN KARAKTER UNTUK:</div>
+            <div id="pinyinText"></div>
+        </div>
+
+        <div id="shieldTimerBar"><div id="shieldTimerFill"></div></div>
+
+        <div id="charOptionsContainer"></div>
+
+        <div id="arrowIndicator">
+            <div class="arrow-key">↓</div>
+            <div class="arrow-hint">Tekan ↓ atau Tap untuk memilih</div>
+        </div>
+        <!-- CAR SELECTION SCREEN -->
+        <div class="screen" id="carSelectScreen">
+            <h1>PILIH MOBIL</h1>
+            <p style="color: #FFD700; font-size: 18px; margin-bottom: 20px;">挑选你的汽车！</p>
+            
+            <div class="car-grid">
+                <div class="car-card selected" data-car="sports" onclick="selectCar(this)">
+                    <div class="car-preview sports-car"></div>
+                    <div class="car-name">Sports Car</div>
+                    <div class="car-stats">
+                        <span>⚡ Speed</span>
+                        <div class="stat-bar"><div style="width:90%"></div></div>
+                        <span style="color:#FF4757; margin-top:6px;">🔥 TURBO: 2x Speed + 1.5x Score</span>
+                        <span style="color:#FFD700; font-size:10px;">Press ↑ to activate</span>
+                    </div>
+                </div>
+                
+                <div class="car-card" data-car="classic" onclick="selectCar(this)">
+                    <div class="car-preview classic-car"></div>
+                    <div class="car-name">Classic</div>
+                    <div class="car-stats">
+                        <span>⚡ Speed</span>
+                        <div class="stat-bar"><div style="width:70%"></div></div>
+                        <span style="color:#3498db; margin-top:6px;">⏱️ SLOW MO: Collect ⏱️ items</span>
+                        <span style="color:#FFD700; font-size:10px;">Standard gameplay</span>
+                    </div>
+                </div>
+                
+                <div class="car-card" data-car="truck" onclick="selectCar(this)">
+                    <div class="car-preview truck-car"></div>
+                    <div class="car-name">Truck</div>
+                    <div class="car-stats">
+                        <span>🛡️ Armor</span>
+                        <div class="stat-bar"><div style="width:95%"></div></div>
+                        <span style="color:#00E5FF; margin-top:6px;">🛡️ ARMOR: 1 Extra Life</span>
+                        <span style="color:#f39c12; font-size:10px;">🐢 Slower: 5.3s per level</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-start" onclick="confirmCarSelection()" style="margin-top: 25px;">
+                PILIH & MULAI
+            </button>
+        </div>
+        <!-- SCREENS -->
+        <div class="screen hidden" id="startScreen">
+            <h1>🏃 地铁跑酷</h1>
+            <p style="color: #FFD700; font-size: 20px;">Chinese Subway Runner</p>
+            <div class="instructions">
+                <p>🎯 <b>Tugas:</b> Lihat aksara di badan pelari</p>
+                <p>🚪 <b>Pilih pintu</b> dengan arti Bahasa Indonesia yang benar</p>
+                <p>❌ <b>Salah = Game Over!</b></p>
+            </div>
+            <p style="margin-top: 10px; color: #888;">32 Level | Timer aktif | Bonus cepat!</p>
+            <div class="swipe-hint">
+                <span class="key-hint">←</span> Kiri 
+                <span class="key-hint">↓</span> Slow Mo 
+                <span class="key-hint">→</span> Kanan
+                <br><span style="color:#FF4757; font-size:12px;">🏎️ Sports: ↑ = Turbo</span>
+            </div>
+            <button class="btn btn-start" onclick="startGame()">MULAI</button>
+        </div>
+
+        <div class="screen hidden" id="gameOverScreen">
+            <h2>💥 GAME OVER!</h2>
+            <p>Kamu memilih pintu yang salah!</p>
+            <p>Jawaban benar: <span id="correctAnswer" style="color: #FFD700; font-size: 22px;"></span></p>
+            <p style="margin-top: 15px;">Score Akhir: <span id="finalScore" style="color: #FFD700; font-size: 32px;">0</span></p>
+            <p>Level dilewati: <span id="passedLevels" style="color: #00E676;">0</span> / 32</p>
+            <button class="btn btn-retry" onclick="showCarSelection()">COBA LAGI</button>
+        </div>
+
+        <div class="screen hidden" id="finishScreen">
+            <h1>🎉 SELAMAT!</h1>
+            <p>Kamu berhasil melewati semua 32 pintu!</p>
+            <p style="margin-top: 15px; color: #888;">Score Akhir</p>
+            <p style="font-size: 56px; color: #FFD700; margin: 5px 0;"><span id="finishScore">0</span></p>
+            <p style="color: #00E676; font-size: 22px;">🏆 Perfect Run!</p>
+            <button class="btn btn-start" onclick="showCarSelection()" style="margin-top: 20px;">MAIN LAGI</button>
+        </div>
+
+        <!-- BOSS FIGHT ELEMENTS -->
+        <div id="bossTank">
+            <div class="tank-turret"><div class="tank-barrel"></div></div>
+            <div class="tank-body">
+                <div class="tank-eye"></div>
+                <div class="tank-track left"></div>
+                <div class="tank-track right"></div>
+            </div>
+            <div id="bossShield"></div>
+        </div>
+
+        <div id="bossHealthBar">
+            <div id="bossHealthText">BOSS HP</div>
+            <div id="bossHealthFill"></div>
+        </div>
+
+        <div id="shootBtn"></div>
+
+        <!-- MOBILE CONTROL BUTTONS -->
+        <div id="mobileControls">
+            <div class="mobile-btn mobile-btn-left" id="btnLeft">←</div>
+            <div class="mobile-btn mobile-btn-right" id="btnRight">→</div>
+            <div class="mobile-btn mobile-btn-slowmo" id="btnSlowMo">
+                ⏱️
+                <span class="slowmo-badge" id="slowMoBadge" style="display:none;">0</span>
+            </div>
+            <div class="mobile-btn mobile-btn-turbo" id="btnTurbo">🔥</div>
+        </div>
+
+
+        <div class="screen hidden" id="bossScreen">
+            <h1>⚠️ BOSS FIGHT!</h1>
+            <p class="boss-intro-text">Tank Raksasa menghalangi jalan!</p>
+            <p style="color: #ccc; font-size: 16px; margin: 8px 0;">Hindari peluru merah dan tembak balik!</p>
+            <div class="instructions">
+                <p>🎯 <span class="key-hint">↑</span> atau tombol 🔥 untuk menembak</p>
+                <p>🏃 <span class="key-hint">←</span> <span class="key-hint">→</span> untuk menghindar</p>
+                <p>🛡️ Boss akan aktifkan perisai - pecahkan dengan karakter Cina!</p>
+                <p>❤️ Hati masih berlaku - 3 kena = Game Over!</p>
+            </div>
+            <button class="btn btn-retry" onclick="startBossFight()" style="margin-top: 20px;">LAWAN BOSS!</button>
+        </div>
+
+        <div class="screen hidden" id="bossVictoryScreen">
+            <h1>🎉 BOSS KALAH!</h1>
+            <p style="color: #00E676; font-size: 22px;">Tank raksasa telah hancur!</p>
+            <p style="margin-top: 15px; color: #888;">Score Akhir</p>
+            <p style="font-size: 56px; color: #FFD700; margin: 5px 0;"><span id="bossVictoryScore">0</span></p>
+            <p style="color: #FFD700; font-size: 20px;">🏆 Kamu adalah legenda!</p>
+            <button class="btn btn-start" onclick="showCarSelection()" style="margin-top: 20px;">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <script>
+
+        // Prevent zoom, scroll, and bounce on mobile
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+
+        window.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent pull-to-refresh and overscroll
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target.closest('#gameContainer')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // ================= TEST FUNCTION =================
+        function testBossFight() {
+            currentLevel = 32;
+            score = 1000;
+            hearts = MAX_HEARTS;
+            runnerLane = 1;
+            updateHeartsUI();
+            updateRunnerPosition();
+
+            const runner = document.getElementById('runner');
+            runner.classList.remove('celebrate', 'fall', 'shake');
+            runner.style.opacity = '1';
+            runner.style.transform = 'translateX(-50%)';
+
+            document.getElementById('doorTrack').innerHTML = '';
+            doors = [];
+            skillItems = [];
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('finishScreen').classList.add('hidden');
+            document.getElementById('bossScreen').classList.remove('hidden');
+            document.getElementById('bossVictoryScreen').classList.add('hidden');
+
+            updateScore();
+            console.log('Boss fight test mode activated! Click "LAWAN BOSS!" to start.');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 't' || e.key === 'T') {
+                const startScreen = document.getElementById('startScreen');
+                if (!startScreen.classList.contains('hidden') || 
+                    document.getElementById('gameOverScreen').classList.contains('hidden') === false ||
+                    document.getElementById('finishScreen').classList.contains('hidden') === false) {
+                    testBossFight();
+                }
+            }
+        });
+
+        // Game data - Chinese characters with Indonesian translations and pinyin
+        const gameData = [
+            { char: "学艺", meaning: "Belajar keahlian", pinyin: "xué yì" },
+            { char: "电梯", meaning: "Lift/Eskalator", pinyin: "diàn tī" },
+            { char: "然后", meaning: "Kemudian", pinyin: "rán hòu" },
+            { char: "挂号", meaning: "Daftar Berobat", pinyin: "guà hào" },
+            { char: "看病", meaning: "Berobat", pinyin: "kàn bìng" },
+            { char: "获得", meaning: "Mendapatkan", pinyin: "huò dé" },
+            { char: "凤凰", meaning: "Burung Phoenix", pinyin: "fèng huáng" },
+            { char: "耐心", meaning: "Kesabaran", pinyin: "nài xīn" },
+            { char: "猫头鹰", meaning: "Burung Hantu", pinyin: "māo tóu yīng" },
+            { char: "老鹰", meaning: "Elang", pinyin: "lǎo yīng" },
+            { char: "屋檐", meaning: "Tepi Atap", pinyin: "wū yán" },
+            { char: "怕", meaning: "Takut", pinyin: "pà" },
+            { char: "麻雀", meaning: "Burung Gereja", pinyin: "má què" },
+            { char: "泥", meaning: "Lumpur", pinyin: "ní" },
+            { char: "铺", meaning: "Menghamparkan", pinyin: "pū" },
+            { char: "结实", meaning: "Kokoh", pinyin: "jiē shi" },
+            { char: "蜗牛", meaning: "Siput", pinyin: "wō niú" },
+            { char: "黄鹂鸟", meaning: "Yellow Bird", pinyin: "huáng lí niǎo" },
+            { char: "茶几", meaning: "Meja Kecil", pinyin: "chá jī" },
+            { char: "手提包", meaning: "Tas Tangan", pinyin: "shǒu tí bāo" },
+            { char: "集合", meaning: "Berkumpul", pinyin: "jí hé" },
+            { char: "藤", meaning: "Tali Rotan", pinyin: "téng" },
+            { char: "嫩", meaning: "Lembut/Muda", pinyin: "nèn" },
+            { char: "背", meaning: "Punggung", pinyin: "bèi" },
+            { char: "笨拙", meaning: "Canggung", pinyin: "bèn zhuō" },
+            { char: "芽", meaning: "Tunas", pinyin: "yá" },
+            { char: "壳", meaning: "Cangkang", pinyin: "ké" },
+            { char: "沿", meaning: "Tepi/mengikuti", pinyin: "yán" },
+            { char: "叽叽喳喳", meaning: "Kicau Burung", pinyin: "jī jī zhā zhā" },
+            { char: "傻", meaning: "Bodoh", pinyin: "shǎ" },
+            { char: "成熟", meaning: "Matang", pinyin: "chéng shú" },
+            { char: "嘲笑", meaning: "Menertawakan", pinyin: "cháo xiào" }
+        ];
+
+        // Distractor Indonesian meanings
+        const distractors = [
+            "Makan", "Tidur", "Lari", "Berenang", "Bernyanyi", "Menari", "Melukis", "Menulis",
+            "Membaca", "Main Bola", "Naik Gunung", "Naik Sepeda", "Memancing", "Memasak", "Mencuci", "Menyapu",
+            "Buka Pintu", "Tutup Jendela", "Minum", "Pakai Baju", "Pakai Topi", "Pakai Sepatu", "Sikat Gigi", "Cuci Muka",
+            "Sisir Rambut", "Lihat Cermin", "Telepon", "Nonton TV", "Main Komputer", "Dengar Musik", "Makan Buah",
+            "Belanja", "Naik Kereta", "Naik Pesawat", "Naik Kapal", "Jalan Kaki", "Berdiri", "Duduk", "Berbaring",
+            "Bangun Tidur", "Mimpi", "Tertawa", "Menangis", "Marah", "Senang", "Sedih", "Takut",
+            "Berani", "Pintar", "Cantik", "Tampan", "Tinggi", "Pendek", "Gemuk", "Kurus",
+            "Muda", "Tua", "Sehat", "Sakit", "Bersih", "Kotor", "Tenang", "Berisik",
+            "Cepat", "Lambat", "Terang", "Gelap", "Hangat", "Dingin", "Kering", "Basah",
+            "Lembut", "Kasar", "Tajam", "Tumpul", "Ringan", "Berat", "Keras", "Lentur",
+            "Tebal", "Tipis", "Lebar", "Sempit", "Panjang", "Pendek", "Besar", "Kecil",
+            "Banyak", "Sedikit", "Jauh", "Dekat", "Baru", "Lama", "Baik", "Buruk",
+            "Benar", "Salah", "Asli", "Palsu", "Harum", "Bau", "Manis", "Pahit",
+            "Asam", "Pedas", "Asin", "Hambar", "Panas", "Dingin", "Sejuk", "Membara",
+            "Air", "Tanah", "Angin", "Hujan", "Salju", "Petir", "Listrik", "Awan",
+            "Kabut", "Embun", "Es", "Api", "Pohon", "Bunga", "Daun", "Akar",
+            "Langit", "Bumi", "Bulan", "Matahari", "Bintang", "Laut", "Sungai", "Danau",
+            "Gunung", "Lembah", "Hutan", "Padang", "Gurun", "Pantai", "Pulau", "Negeri"
+        ];
+
+        // Game state variables
+        let currentLevel = 0;
+        let score = 0;
+        let shuffledData = [];
+        let timer = null;
+        let timeLeft = 100;
+        const TIME_PER_LEVEL = 5;
+        let maxTime = TIME_PER_LEVEL;
+        let runnerLane = 1;
+        let isGameActive = false;
+        let doorSpeed = 3; // base value, overridden by car config in startGame()
+        let animationId = null;
+        let doors = [];
+        let spawnTimer = null;
+        let hearts = 3;
+        const MAX_HEARTS = 3;
+        let skillCount = 0;
+        let skillActive = false;
+        let skillTimer = null;
+        const SKILL_DURATION = 3000;
+        const SLOW_FACTOR = 0.5;
+        let skillItems = [];
+        let skillSpawnTimeout = null;
+        const lanePositions = [16.67, 50, 83.33];
+
+        // ================= CAR ABILITY VARIABLES =================
+        let turboActive = false;
+        let turboTimer = null;
+        let turboCooldownActive = false;
+        let turboCooldownTimer = null;
+        const TURBO_COOLDOWN_DURATION = 2000; // 2 seconds cooldown
+        let truckArmorActive = false;
+        let truckArmorRegenLevel = 0; // Track which level armor was last regenerated
+        let originalDoorSpeed = 3;
+        let originalTimePerLevel = TIME_PER_LEVEL;
+        // ================= BOSS FIGHT VARIABLES =================
+        let bossFightActive = false;
+        let bossHP = 100;
+        const BOSS_MAX_HP = 200;
+        let bossBullets = [];
+        let runnerBullets = [];
+        let bossShootInterval = null;
+        let bossMoveInterval = null;
+        let bossX = 50;
+        let bossDirection = 1;
+        const BOSS_SPEED = 0.3;
+        const BOSS_SHOOT_RATE = 800;
+        const BOSS_BULLET_SPEED = 5;
+        const RUNNER_BULLET_SPEED = 8;
+        const BOSS_DAMAGE_PER_HIT = 5;
+        const BOSS_HIT_DAMAGE = 1;
+        let trailInterval = null;
+        let trailContainer = null;
+
+            // ================= CAR SELECTION VARIABLES =================
+        let selectedCarType = 'sports';
+        const CAR_CONFIG = {
+            sports: { 
+                primary: '#FF4757', 
+                secondary: '#c0392b', 
+                name: 'Sports Car',
+                image: 'car_sport.png',
+                ability: 'turbo',
+                baseDoorSpeed: 3,
+                baseTime: 5,
+                turboMultiplier: 2.0,      // 2x speed during turbo
+                turboDuration: 1000,          // 4 seconds
+                turboCooldown: false
+            },
+            classic: { 
+                primary: '#3498db', 
+                secondary: '#2980b9', 
+                name: 'Classic',
+                image: 'car_classic.png',
+                ability: 'none',
+                baseDoorSpeed: 3,
+                baseTime: 5
+            },
+            truck: { 
+                primary: '#f39c12', 
+                secondary: '#d68910', 
+                name: 'Truck',
+                image: 'car_truck.png',
+                ability: 'armor',
+                baseDoorSpeed: 2.4,
+                baseTime: 5.4,
+                hasArmor: true,
+                armorActive: false,
+                armorRegenInterval: 5 // Regain shield every 5 levels
+            }
+        };
+
+        // ================= SHIELD PHASE VARIABLES =================
+        let shieldPhaseActive = false;
+        let hitsSinceLastShield = 0;
+        let shieldPhaseTimer = null;
+        let shieldTimeLeft = 100;
+        const SHIELD_PHASE_DURATION = 8;
+        let currentShieldQuestion = null;
+        let shieldPhaseAnswered = false;
+        let shockwaves = [];
+        const HITS_TO_ACTIVATE_SHIELD = 3;
+
+        function initSpeedLines() {
+            const container = document.getElementById('speedLines');
+            container.innerHTML = '';
+            for (let i = 0; i < 15; i++) {
+                const line = document.createElement('div');
+                line.className = 'speed-line';
+                line.style.left = Math.random() * 100 + '%';
+                line.style.height = (50 + Math.random() * 100) + 'px';
+                line.style.animationDelay = Math.random() * 2 + 's';
+                line.style.animationDuration = (0.3 + Math.random() * 0.4) + 's';
+                container.appendChild(line);
+            }
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function getDistractors(correctMeaning, count) {
+            const otherMeanings = gameData
+                .filter(item => item.meaning !== correctMeaning)
+                .map(item => item.meaning);
+            const shuffled = shuffleArray(otherMeanings);
+            return shuffled.slice(0, count);
+        }
+
+        function startGame() {
+            currentLevel = 0;
+            score = 0;
+            runnerLane = 1;
+            isGameActive = true;
+            doors = [];
+            shuffledData = shuffleArray(gameData);
+            hearts = MAX_HEARTS;
+            updateHeartsUI();
+
+            skillCount = 0;
+            skillActive = false;
+            skillItems = [];
+            if (skillTimer) clearTimeout(skillTimer);
+            if (skillSpawnTimeout) clearTimeout(skillSpawnTimeout);
+            updateSkillIndicator(); // Sync UI with skillCount = 0
+            document.getElementById('skillIndicator').style.display = 'none';
+            document.getElementById('skillActive').style.display = 'none';
+            document.getElementById('turboIndicator').style.display = 'none';
+            document.getElementById('shieldArmorIndicator').style.display = 'none';
+            document.getElementById('truckSlowBadge').style.display = 'none';
+            document.getElementById('gameContainer').style.filter = 'none';
+
+            // Reset ability states
+            turboActive = false;
+            if (turboTimer) clearTimeout(turboTimer);
+            turboCooldownActive = false;
+            if (turboCooldownTimer) clearTimeout(turboCooldownTimer);
+            truckArmorActive = false;
+            truckArmorRegenLevel = 0;
+            // Clear any active trails
+            stopTurboTrail();
+            clearAllTrails();
+
+            // Apply car-specific base stats
+            const carConfig = CAR_CONFIG[selectedCarType];
+            doorSpeed = carConfig.baseDoorSpeed;
+            originalDoorSpeed = carConfig.baseDoorSpeed;
+            originalTimePerLevel = carConfig.baseTime;
+            maxTime = carConfig.baseTime;
+
+            // Truck: activate armor shield
+            if (carConfig.ability === 'armor' && carConfig.hasArmor) {
+                truckArmorActive = true;
+                document.getElementById('shieldArmorIndicator').style.display = 'flex';
+                document.getElementById('truckSlowBadge').style.display = 'flex';
+                const shield = document.getElementById('truckShieldEffect');
+                shield.style.display = 'block';
+                shield.classList.remove('shield-break-effect');
+                shield.style.opacity = '1';
+                shield.style.transform = 'scale(1)';
+            }
+
+            // Sports: show turbo button on mobile
+            const btnTurbo = document.getElementById('btnTurbo');
+            if (carConfig.ability === 'turbo') {
+                btnTurbo.classList.add('active');
+                btnTurbo.classList.remove('cooldown');
+            } else {
+                btnTurbo.classList.remove('active', 'cooldown');
+            }
+            // Ensure car mode stays active
+            const car = document.getElementById('runner');
+            car.classList.add('car-mode');
+            
+            // Update car color based on selection
+            updateCarColor();
+            // Reset boss fight
+            bossFightActive = false;
+            bossHP = BOSS_MAX_HP;
+            hitsSinceLastShield = 0;
+            shieldPhaseActive = false;
+            if (bossMoveInterval) clearInterval(bossMoveInterval);
+            if (bossShootInterval) clearInterval(bossShootInterval);
+            if (shieldPhaseTimer) clearInterval(shieldPhaseTimer);
+            document.getElementById('bossTank').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('shootBtn').style.display = 'none';
+            document.getElementById('bossScreen').classList.add('hidden');
+            document.getElementById('bossVictoryScreen').classList.add('hidden');
+            document.getElementById('bossShield').style.display = 'none';
+            hideShieldPhaseUI();
+
+            bossBullets.forEach(b => { if (b.element && b.element.parentNode) b.element.remove(); });
+            runnerBullets.forEach(b => { if (b.element && b.element.parentNode) b.element.remove(); });
+            bossBullets = [];
+            runnerBullets = [];
+            shockwaves.forEach(s => { if (s.element && s.element.parentNode) s.element.remove(); });
+            shockwaves = [];
+
+            doors.forEach(d => {
+                if (d.element && d.element.parentNode) {
+                    d.element.remove();
+                }
+            });
+            doors = [];
+            skillItems.forEach(item => {
+                if (item.element && item.element.parentNode) {
+                    item.element.remove();
+                }
+            });
+            skillItems = [];
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('finishScreen').classList.add('hidden');
+            document.getElementById('total').textContent = shuffledData.length;
+
+            const runner = document.getElementById('runner');
+            runner.classList.remove('celebrate', 'fall', 'shake');
+
+            document.getElementById('doorTrack').innerHTML = '';
+
+            initSpeedLines();
+            updateScore();
+            loadLevel();
+        }
+
+        function updateRunnerPosition() {
+            const runner = document.getElementById('runner');
+            runner.style.left = lanePositions[runnerLane] + '%';
+        }
+
+        function moveLeft() {
+            if (!isGameActive && !bossFightActive) return;
+            if (runnerLane > 0) {
+                runnerLane--;
+                updateRunnerPosition();
+                updateLaneHighlight();
+            }
+        }
+
+        function moveRight() {
+            if (!isGameActive && !bossFightActive) return;
+            if (runnerLane < 2) {
+                runnerLane++;
+                updateRunnerPosition();
+                updateLaneHighlight();
+            }
+        }
+
+        function loadLevel() {
+            resetLevelSpeed();
+            
+            if (currentLevel >= shuffledData.length) {
+                showFinish();
+                return;
+            }
+
+            const current = shuffledData[currentLevel];
+
+            document.getElementById('runnerChar').textContent = current.char;
+
+            document.getElementById('level').textContent = currentLevel + 1;
+
+            startTimer();
+
+            spawnNextDoors();
+
+            if (Math.random() < 0.3) {
+                skillSpawnTimeout = setTimeout(() => spawnSkillItem(), 1500);
+            }
+
+            startDoorMovement();
+            updateRoadSpeed();
+
+            // Truck: regenerate shield every 5 levels if broken
+            checkTruckArmorRegen();
+        }
+
+        function createGate(laneIndex, meaning, label) {
+            const track = document.getElementById('doorTrack');
+            const gate = document.createElement('div');
+            gate.className = 'gate-item';
+            gate.style.left = (laneIndex * 33.33) + '%';
+            gate.style.top = '-70px';
+            gate.dataset.lane = laneIndex;
+            gate.dataset.meaning = meaning;
+            gate.dataset.label = label;
+
+            gate.innerHTML = `
+                <div class="gate-glow"></div>
+                <div class="gate-pillar left"></div>
+                <div class="gate-pillar right"></div>
+                <div class="gate-arm"></div>
+                <div class="gate-label">
+                    <span class="gate-label-id">${label}</span>
+                    ${meaning}
+                </div>
+            `;
+
+            gate.onclick = function() {
+                if (isGameActive) {
+                    runnerLane = laneIndex;
+                    updateRunnerPosition();
+                }
+            };
+
+            track.appendChild(gate);
+            doors.push({
+                element: gate,
+                lane: laneIndex,
+                meaning: meaning,
+                y: -70,
+                passed: false
+            });
+        }
+
+        function spawnSkillItem() {
+            if (!isGameActive) return;
+
+            const containerHeight = document.getElementById('gameContainer').clientHeight;
+            const laneIndex = Math.floor(Math.random() * 3);
+            const spawnY = containerHeight * 0.35;
+
+            const item = document.createElement('div');
+            item.className = 'skill-item';
+            item.style.cssText = `
+                position: absolute;
+                width: 70px;
+                height: 70px;
+                left: ${lanePositions[laneIndex] - 7}%;
+                top: ${spawnY}px;
+                z-index: 100;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 40px;
+                background: radial-gradient(circle, #00E676 0%, #00C853 50%, rgba(0,200,83,0.2) 100%);
+                border-radius: 50%;
+                border: 3px solid #FFD700;
+                box-shadow: 0 0 25px rgba(0,230,118,1), 0 0 50px rgba(0,230,118,0.5), inset 0 0 20px rgba(255,255,255,0.3);
+                animation: pulse 0.6s infinite;
+                pointer-events: none;
+            `;
+            item.innerHTML = '⏱️';
+            item.dataset.lane = laneIndex;
+
+            document.getElementById('doorTrack').appendChild(item);
+
+            skillItems.push({
+                element: item,
+                lane: laneIndex,
+                y: spawnY,
+                collected: false
+            });
+        }
+
+        function spawnNextDoors() {
+            if (!isGameActive) return;
+
+            const current = shuffledData[currentLevel];
+            const wrongMeanings = getDistractors(current.meaning, 2);
+            const meanings = shuffleArray([current.meaning, wrongMeanings[0], wrongMeanings[1]]);
+            const gateLabels = ['A', 'B', 'C'];
+
+            for (let i = 0; i < 3; i++) {
+                createGate(i, meanings[i], gateLabels[i]);
+            }
+        }
+
+        function startDoorMovement() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            function animate() {
+                if (isGameActive || doors.length > 0) {
+                    const containerHeight = document.getElementById('gameContainer').clientHeight;
+                    const runnerBottomPx = containerHeight * 0.15;
+                    const runnerTopPx = containerHeight - runnerBottomPx - 120;
+                    const runnerBottomRelative = runnerTopPx + 120;
+
+                    doors.forEach((door, index) => {
+                        door.y += doorSpeed;
+                        door.element.style.top = door.y + 'px';
+
+                        if (!door.passed && !door.checked && !door.answered && door.y > runnerBottomRelative - 60 && door.y < runnerBottomRelative + 20) {
+                            if (door.lane === runnerLane) {
+                                door.checked = true;
+                                door.answered = true;
+                                checkAnswer(door);
+                            }
+                        }
+
+                        if (door.y > containerHeight + 100) {
+                            door.passed = true;
+                        }
+                    });
+
+                    doors = doors.filter(door => {
+                        if (door.y > containerHeight + 100) {
+                            if (door.element && door.element.parentNode) {
+                                door.element.remove();
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    skillItems.forEach((item, index) => {
+                        if (item.collected) return;
+
+                        item.y += doorSpeed * 1.8;
+                        item.element.style.top = item.y + 'px';
+
+                        if (item.y > runnerBottomRelative - 30 && item.y < runnerBottomRelative + 30) {
+                            if (item.lane === runnerLane) {
+                                item.collected = true;
+                                item.element.style.transform = 'scale(1.5)';
+                                item.element.style.opacity = '0';
+                                setTimeout(() => item.element.remove(), 300);
+
+                                skillCount++;
+                                updateSkillIndicator();
+
+                                const popup = document.createElement('div');
+                                popup.className = 'score-popup';
+                                popup.textContent = '⏱️ +1';
+                                popup.style.left = '50%';
+                                popup.style.top = '40%';
+                                popup.style.color = '#00E676';
+                                popup.style.transform = 'translateX(-50%)';
+                                document.getElementById('gameContainer').appendChild(popup);
+                                setTimeout(() => popup.remove(), 800);
+                            }
+                        }
+
+                        if (item.y > containerHeight + 100) {
+                            item.element.remove();
+                            item.collected = true;
+                        }
+                    });
+
+                    skillItems = skillItems.filter(item => !item.collected);
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function resetSkillAndSpeed() {
+            // doorSpeed set by car config above
+            if (skillActive) {
+                skillActive = false;
+                clearTimeout(skillTimer);
+                document.getElementById('skillActive').style.display = 'none';
+                document.getElementById('gameContainer').style.filter = 'none';
+            }
+        }
+
+        function checkAnswer(doorObj) {
+            clearInterval(timer);
+            isGameActive = false;
+            resetSkillAndSpeed();
+
+            const current = shuffledData[currentLevel];
+            const isCorrect = doorObj.meaning === current.meaning;
+
+            if (isCorrect) {
+                const timeBonus = Math.floor(timeLeft / 5);
+                let levelScore = 100 + timeBonus;
+
+                // Sports Car: 1.5x score during turbo
+                if (CAR_CONFIG[selectedCarType].ability === 'turbo' && turboActive) {
+                    levelScore = Math.floor(levelScore * 1);
+                }
+
+                // Truck: 0.8x score due to slow speed (easier to hit)
+                if (CAR_CONFIG[selectedCarType].ability === 'armor') {
+                    levelScore = Math.floor(levelScore * 1);
+                }
+
+                score += levelScore;
+
+                doorObj.element.classList.add('correct-glow');
+                doorObj.element.classList.add('gate-open');
+                showScorePopup(levelScore);
+
+                const runner = document.getElementById('runner');
+                runner.classList.add('celebrate');
+                updateScore();
+
+                // Mark all gates to keep scrolling to bottom
+                doors.forEach(d => {
+                    d.answered = true;  // prevent re-checking
+                    d.checked = true;
+                });
+
+                setTimeout(() => {
+                    if (skillSpawnTimeout) {
+                        clearTimeout(skillSpawnTimeout);
+                        skillSpawnTimeout = null;
+                    }
+                    runner.classList.remove('celebrate');
+                    currentLevel++;
+                    isGameActive = true;
+                    loadLevel();
+                }, 1200);
+
+            } else {
+                // Truck Armor: absorb first hit
+                if (CAR_CONFIG[selectedCarType].ability === 'armor' && truckArmorActive) {
+                    truckArmorActive = false;
+                    document.getElementById('shieldArmorIndicator').style.display = 'none';
+
+                // Visual feedback for armor break
+                const runner = document.getElementById('runner');
+                runner.classList.add('shake');
+                document.getElementById('gameContainer').classList.add('flash-red');
+
+                // Shield break visual effect
+                const shield = document.getElementById('truckShieldEffect');
+                shield.classList.add('shield-hit-flash');
+                setTimeout(() => {
+                    shield.classList.remove('shield-hit-flash');
+                    shield.classList.add('shield-break-effect');
+                    setTimeout(() => {
+                        shield.style.display = 'none';
+                        shield.classList.remove('shield-break-effect');
+                    }, 600);
+                }, 400);
+
+                    // Show armor break popup
+                    const popup = document.createElement('div');
+                    popup.className = 'score-popup';
+                    popup.textContent = '🛡️ ARMOR BROKEN!';
+                    popup.style.left = '50%';
+                    popup.style.top = '40%';
+                    popup.style.color = '#00E5FF';
+                    popup.style.transform = 'translateX(-50%)';
+                    document.getElementById('gameContainer').appendChild(popup);
+                    setTimeout(() => popup.remove(), 1000);
+
+                    setTimeout(() => {
+                        document.getElementById('gameContainer').classList.remove('flash-red');
+                        runner.classList.remove('shake');
+                    }, 400);
+
+                    // Continue game (don't lose heart)
+                    setTimeout(() => {
+                        doors.forEach(d => {
+                            d.element.style.transition = 'all 0.5s';
+                            d.element.style.opacity = '0';
+                        });
+                        setTimeout(() => {
+                            doors.forEach(d => {
+                                if (d.element && d.element.parentNode) d.element.remove();
+                            });
+                            doors = [];
+                            if (skillSpawnTimeout) { clearTimeout(skillSpawnTimeout); skillSpawnTimeout = null; }
+                            currentLevel++;
+                            isGameActive = true;
+                            loadLevel();
+                        }, 500);
+                    }, 800);
+                    return;
+                }
+
+                hearts--;
+                updateHeartsUI();
+
+                const runner = document.getElementById('runner');
+                runner.classList.add('shake');
+
+                document.getElementById('gameContainer').classList.add('flash-red');
+                setTimeout(() => {
+                    document.getElementById('gameContainer').classList.remove('flash-red');
+                }, 300);
+
+                doorObj.element.classList.add('wrong-glow');
+                doorObj.element.classList.add('gate-break');
+
+                if (hearts > 0) {
+                    setTimeout(() => {
+                        doors.forEach(d => {
+                            d.element.style.transition = 'all 0.5s';
+                            d.element.style.opacity = '0';
+                        });
+
+                        setTimeout(() => {
+                            doors.forEach(d => {
+                                if (d.element && d.element.parentNode) {
+                                    d.element.remove();
+                                }
+                            });
+                            doors = [];
+
+                            if (skillSpawnTimeout) {
+                                clearTimeout(skillSpawnTimeout);
+                                skillSpawnTimeout = null;
+                            }
+                            runner.classList.remove('shake');
+                            currentLevel++;
+                            isGameActive = true;
+                            loadLevel();
+                        }, 500);
+                    }, 800);
+                } else {
+                    setTimeout(() => {
+                        gameOver(current.meaning);
+                    }, 600);
+                }
+            }
+        }
+
+        function startTimer() {
+            if (timer) clearInterval(timer);
+            timeLeft = 100;
+            const carConfig = CAR_CONFIG[selectedCarType];
+            maxTime = carConfig.baseTime || TIME_PER_LEVEL;
+            updateTimerBar();
+
+            timer = setInterval(() => {
+                timeLeft -= 100 / (maxTime * 10);
+                updateTimerBar();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    cancelAnimationFrame(animationId);
+                    isGameActive = false;
+                    gameOver("Waktu habis!");
+                }
+            }, 100);
+        }
+
+        function updateTimerBar() {
+            const fill = document.getElementById('timerFill');
+            fill.style.width = timeLeft + '%';
+
+            if (timeLeft < 25) {
+                fill.style.background = '#FF4757';
+            } else if (timeLeft < 50) {
+                fill.style.background = '#FFD700';
+            } else {
+                fill.style.background = 'linear-gradient(to right, #00E676, #FFD700)';
+            }
+        }
+
+        function showScorePopup(points) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+' + points;
+            popup.style.left = '50%';
+            popup.style.top = '30%';
+            popup.style.transform = 'translateX(-50%)';
+            document.getElementById('gameContainer').appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        function gameOver(correctAnswer) {
+            const runner = document.getElementById('runner');
+            carExplosionEffect();
+            runner.classList.add('fall');
+
+            setTimeout(() => {
+                document.getElementById('correctAnswer').textContent = correctAnswer;
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('passedLevels').textContent = currentLevel;
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            }, 800);
+        }
+
+        function showFinish() {
+            cancelAnimationFrame(animationId);
+            clearInterval(timer);
+            isGameActive = false;
+
+            doors.forEach(d => {
+                if (d.element && d.element.parentNode) {
+                    d.element.remove();
+                }
+            });
+            doors = [];
+            document.getElementById('doorTrack').innerHTML = '';
+
+            document.getElementById('bossScreen').classList.remove('hidden');
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function updateHeartsUI() {
+            const display = document.getElementById('heartsDisplay');
+            display.innerHTML = '';
+            for (let i = 0; i < MAX_HEARTS; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'heart-icon';
+                heart.textContent = i < hearts ? '❤️' : '🖤';
+                heart.style.opacity = i < hearts ? '1' : '0.3';
+                display.appendChild(heart);
+            }
+        }
+
+        function activateSkill() {
+            // Slow motion skill - available for all cars (collect ⏱️ items)
+            if (skillCount <= 0 || skillActive || !isGameActive) return;
+
+            // Cannot use slow-mo while turbo is active
+            if (turboActive) return;
+
+            skillCount--;
+            skillActive = true;
+            updateSkillIndicator();
+            document.getElementById('skillActive').style.display = 'flex';
+
+            doorSpeed *= SLOW_FACTOR;
+
+            document.getElementById('gameContainer').style.filter = 'hue-rotate(90deg) brightness(1.2)';
+
+            skillTimer = setTimeout(() => {
+                skillActive = false;
+                doorSpeed /= SLOW_FACTOR;
+                document.getElementById('skillActive').style.display = 'none';
+                document.getElementById('gameContainer').style.filter = 'none';
+            }, SKILL_DURATION);
+        }
+
+        function addTurboSpeedLines() {
+            const container = document.getElementById('speedLines');
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'turbo-speed-line';
+                line.style.left = Math.random() * 100 + '%';
+                line.style.height = (80 + Math.random() * 150) + 'px';
+                line.style.animationDelay = Math.random() * 0.5 + 's';
+                line.style.animationDuration = (0.1 + Math.random() * 0.2) + 's';
+                container.appendChild(line);
+            }
+        }
+
+        function removeTurboSpeedLines() {
+            const lines = document.querySelectorAll('.turbo-speed-line');
+            lines.forEach(line => line.remove());
+        }
+
+        function updateSkillIndicator() {
+            const indicator = document.getElementById('skillIndicator');
+            const badge = document.getElementById('slowMoBadge');
+            const btnSlowMo = document.getElementById('btnSlowMo');
+
+            if (skillCount > 0) {
+                indicator.style.display = 'flex';
+                indicator.querySelector('span:nth-child(2)').textContent = `SLOW MO x${skillCount}`;
+                badge.style.display = 'flex';
+                badge.textContent = skillCount;
+                btnSlowMo.classList.remove('disabled');
+            } else {
+                indicator.style.display = 'none';
+                badge.style.display = 'none';
+                btnSlowMo.classList.add('disabled');
+            }
+        }
+
+        // ================= TURBO FUNCTION (Sports Car Only) =================
+        function activateTurbo() {
+            if (!isGameActive) return;
+            if (turboActive) return;
+            if (turboCooldownActive) {
+                // Show cooldown feedback
+                const popup = document.createElement('div');
+                popup.className = 'score-popup';
+                popup.textContent = '⏳ COOLDOWN!';
+                popup.style.left = '50%';
+                popup.style.top = '35%';
+                popup.style.color = '#FF4757';
+                popup.style.fontSize = '20px';
+                popup.style.transform = 'translateX(-50%)';
+                document.getElementById('gameContainer').appendChild(popup);
+                setTimeout(() => popup.remove(), 600);
+                return;
+            }
+
+            const carConfig = CAR_CONFIG[selectedCarType];
+            if (carConfig.ability !== 'turbo') return;
+
+            // Cancel slow motion if active
+            if (skillActive) {
+                skillActive = false;
+                clearTimeout(skillTimer);
+                document.getElementById('skillActive').style.display = 'none';
+                document.getElementById('gameContainer').style.filter = 'none';
+                doorSpeed = originalDoorSpeed;
+            }
+
+            turboActive = true;
+            document.getElementById('turboIndicator').style.display = 'flex';
+
+            // Double the door speed
+            doorSpeed = originalDoorSpeed * carConfig.turboMultiplier;
+
+            // Start trail effect
+            startTurboTrail();            
+
+            // Add turbo visual effects
+            addTurboSpeedLines();
+            document.getElementById('gameContainer').style.filter = 'saturate(1.3) contrast(1.1)';
+
+            turboTimer = setTimeout(() => {
+                turboActive = false;
+                doorSpeed = originalDoorSpeed;
+                document.getElementById('turboIndicator').style.display = 'none';
+                document.getElementById('gameContainer').style.filter = 'none';
+                removeTurboSpeedLines();
+                stopTurboTrail();  
+                
+                // Start cooldown
+                startTurboCooldown();
+            }, carConfig.turboDuration);
+        }
+
+        function startTurboCooldown() {
+            turboCooldownActive = true;
+            
+            // Show cooldown indicator
+            const indicator = document.getElementById('turboIndicator');
+            indicator.style.display = 'flex';
+            indicator.querySelector('.turbo-text').textContent = 'TURBO COOLDOWN';
+            indicator.querySelector('.turbo-hint').textContent = '(10s)';
+            indicator.style.borderColor = '#666';
+            indicator.style.background = 'rgba(100,100,100,0.2)';
+            indicator.querySelector('.turbo-text').style.color = '#888';
+            
+            // Animate cooldown bar
+            const cooldownBar = document.createElement('div');
+            cooldownBar.id = 'turboCooldownBar';
+            cooldownBar.style.cssText = `
+                position: absolute;
+                bottom: -8px;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 2px;
+                overflow: hidden;
+            `;
+            const fill = document.createElement('div');
+            fill.style.cssText = `
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(to right, #FF4757, #FFD700);
+                border-radius: 2px;
+                animation: cooldownFill ${TURBO_COOLDOWN_DURATION}ms linear forwards;
+            `;
+            cooldownBar.appendChild(fill);
+            indicator.appendChild(cooldownBar);
+            
+            // Add cooldown CSS if not exists
+            if (!document.getElementById('cooldownStyle')) {
+                const style = document.createElement('style');
+                style.id = 'cooldownStyle';
+                style.textContent = `
+                    @keyframes cooldownFill {
+                        from { width: 100%; }
+                        to { width: 0%; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            turboCooldownTimer = setTimeout(() => {
+                turboCooldownActive = false;
+                indicator.style.display = 'none';
+                indicator.style.borderColor = '#FF4757';
+                indicator.style.background = 'rgba(255, 71, 87, 0.2)';
+                indicator.querySelector('.turbo-text').textContent = 'TURBO ACTIVE!';
+                indicator.querySelector('.turbo-hint').textContent = '(2x Speed)';
+                indicator.querySelector('.turbo-text').style.color = '#FF4757';
+                const bar = document.getElementById('turboCooldownBar');
+                if (bar) bar.remove();
+            }, TURBO_COOLDOWN_DURATION);
+        }
+
+        // ================= BOSS FIGHT FUNCTIONS =================
+
+        function startBossFight() {
+            document.getElementById('bossScreen').classList.add('hidden');
+
+            document.getElementById('doorTrack').innerHTML = '';
+            doors = [];
+            skillItems = [];
+
+            // Reset slow-motion skill when entering boss fight
+            skillCount = 0;
+            skillActive = false;
+            if (skillTimer) clearTimeout(skillTimer);
+            document.getElementById('skillIndicator').style.display = 'none';
+            document.getElementById('skillActive').style.display = 'none';
+            document.getElementById('gameContainer').style.filter = 'none';
+
+            bossFightActive = true;
+            bossHP = BOSS_MAX_HP;
+            bossX = 50;
+            bossDirection = 1;
+            bossBullets = [];
+            runnerBullets = [];
+            hitsSinceLastShield = 0;
+            shieldPhaseActive = false;
+
+            document.getElementById('bossTank').style.display = 'block';
+            document.getElementById('bossHealthBar').style.display = 'block';
+            document.getElementById('shootBtn').style.display = 'flex';
+            document.getElementById('bossShield').style.display = 'none';
+
+            updateBossHealthBar();
+            updateBossPosition();
+
+            startBossAI();
+            startBossGameLoop();
+        }
+
+        function updateBossPosition() {
+            const tank = document.getElementById('bossTank');
+            tank.style.left = bossX + '%';
+            tank.style.transform = `translateX(-50%)`;
+        }
+
+        function startBossAI() {
+            bossMoveInterval = setInterval(() => {
+                if (!bossFightActive) return;
+
+                bossX += BOSS_SPEED * bossDirection;
+
+                if (bossX >= 85) {
+                    bossX = 85;
+                    bossDirection = -1;
+                } else if (bossX <= 15) {
+                    bossX = 15;
+                    bossDirection = 1;
+                }
+
+                updateBossPosition();
+            }, 16);
+
+            bossShootInterval = setInterval(() => {
+                if (!bossFightActive) return;
+                bossShoot();
+            }, BOSS_SHOOT_RATE);
+        }
+
+        function bossShoot() {
+            const container = document.getElementById('gameContainer');
+            const containerRect = container.getBoundingClientRect();
+
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet bullet-boss';
+
+            const tank = document.getElementById('bossTank');
+            const tankRect = tank.getBoundingClientRect();
+            const relativeX = tankRect.left - containerRect.left + tankRect.width / 2 - 5;
+            const relativeY = tankRect.top - containerRect.top + 50;
+
+            bullet.style.left = relativeX + 'px';
+            bullet.style.top = relativeY + 'px';
+
+            container.appendChild(bullet);
+
+            bossBullets.push({
+                element: bullet,
+                x: relativeX,
+                y: relativeY,
+                width: 10,
+                height: 20
+            });
+        }
+
+        function runnerShoot() {
+            if (!bossFightActive) return;
+
+            const container = document.getElementById('gameContainer');
+            const containerRect = container.getBoundingClientRect();
+            const runner = document.getElementById('runner');
+            const runnerRect = runner.getBoundingClientRect();
+
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet bullet-runner';
+
+            const relativeX = runnerRect.left - containerRect.left + runnerRect.width / 2 - 4;
+            const relativeY = runnerRect.top - containerRect.top;
+
+            bullet.style.left = relativeX + 'px';
+            bullet.style.top = relativeY + 'px';
+
+            container.appendChild(bullet);
+
+            runnerBullets.push({
+                element: bullet,
+                x: relativeX,
+                y: relativeY,
+                width: 8,
+                height: 16
+            });
+
+            const runnerBody = runner.querySelector('.runner-body');
+            if (runnerBody) {
+                runnerBody.style.transform = 'translateY(5px)';
+                setTimeout(() => {
+                    runnerBody.style.transform = '';
+                }, 100);
+            }
+        }
+
+        function startBossGameLoop() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            const container = document.getElementById('gameContainer');
+            const containerHeight = container.clientHeight;
+            const containerWidth = container.clientWidth;
+
+            function animate() {
+                if (!bossFightActive) {
+                    animationId = requestAnimationFrame(animate);
+                    return;
+                }
+
+                // Skip bullet movement during shield phase
+                {
+                    const runnerBottomPx = containerHeight * 0.15;
+                    const runnerTopPx = containerHeight - runnerBottomPx - 120;
+                    const runnerLeftPx = (lanePositions[runnerLane] / 100) * containerWidth;
+                    const runnerHitbox = {
+                        x: runnerLeftPx - 40 + 20,
+                        y: runnerTopPx + 20,
+                        width: 40,
+                        height: 80
+                    };
+
+                    // Update boss bullets
+                    for (let i = bossBullets.length - 1; i >= 0; i--) {
+                        const b = bossBullets[i];
+                        b.y += BOSS_BULLET_SPEED;
+                        b.element.style.top = b.y + 'px';
+
+                        const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
+                        if (rectIntersect(bHitbox, runnerHitbox)) {
+                            createSpark(b.x + 5, b.y + 10);
+                            b.element.remove();
+                            bossBullets.splice(i, 1);
+                            takeBossDamage();
+                            continue;
+                        }
+
+                        if (b.y > containerHeight) {
+                            b.element.remove();
+                            bossBullets.splice(i, 1);
+                        }
+                    }
+
+                    // Update runner bullets
+                    const tank = document.getElementById('bossTank');
+                    const tankRect = tank.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const tankHitbox = {
+                        x: tankRect.left - containerRect.left + 10,
+                        y: tankRect.top - containerRect.top + 10,
+                        width: tankRect.width - 20,
+                        height: tankRect.height - 20
+                    };
+
+                    for (let i = runnerBullets.length - 1; i >= 0; i--) {
+                        const b = runnerBullets[i];
+                        b.y -= RUNNER_BULLET_SPEED;
+                        b.element.style.top = b.y + 'px';
+
+                        const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
+                        if (rectIntersect(bHitbox, tankHitbox)) {
+                            createExplosion(b.x, b.y);
+                            b.element.remove();
+                            runnerBullets.splice(i, 1);
+                            damageBoss();
+                            continue;
+                        }
+
+                        if (b.y < -20) {
+                            b.element.remove();
+                            runnerBullets.splice(i, 1);
+                        }
+                    }
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.width || 
+                    r2.x + r2.width < r1.x || 
+                    r2.y > r1.y + r1.height || 
+                    r2.y + r2.height < r1.y);
+        }
+
+        function createSpark(x, y) {
+            const container = document.getElementById('gameContainer');
+            const spark = document.createElement('div');
+            spark.className = 'spark';
+            spark.style.left = x + 'px';
+            spark.style.top = y + 'px';
+            container.appendChild(spark);
+            setTimeout(() => spark.remove(), 300);
+        }
+
+        function createExplosion(x, y) {
+            const container = document.getElementById('gameContainer');
+            const exp = document.createElement('div');
+            exp.className = 'explosion';
+            exp.style.left = (x - 25) + 'px';
+            exp.style.top = (y - 25) + 'px';
+            container.appendChild(exp);
+            setTimeout(() => exp.remove(), 400);
+        }
+
+        function damageBoss() {
+            // If shield is active, bullet hits shield but boss doesn't take damage
+            if (shieldPhaseActive) {
+                // Visual feedback: bullet spark on shield
+                const tank = document.getElementById('bossTank');
+                const tankRect = tank.getBoundingClientRect();
+                const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+                createSpark(
+                    tankRect.left - containerRect.left + tankRect.width / 2,
+                    tankRect.top - containerRect.top + tankRect.height / 2
+                );
+                return;
+            }
+            
+            bossHP -= BOSS_DAMAGE_PER_HIT;
+            if (bossHP < 0) bossHP = 0;
+
+            hitsSinceLastShield++;
+
+            updateBossHealthBar();
+
+            const tank = document.getElementById('bossTank');
+            tank.classList.add('boss-damage');
+            setTimeout(() => tank.classList.remove('boss-damage'), 200);
+
+            const container = document.getElementById('gameContainer');
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 300);
+
+            // Check if should activate shield
+            if (hitsSinceLastShield >= HITS_TO_ACTIVATE_SHIELD && bossHP > 0) {
+                activateShieldPhase();
+            }
+
+            if (bossHP <= 0) {
+                bossDefeated();
+            }
+        }
+
+        function updateBossHealthBar() {
+            const fill = document.getElementById('bossHealthFill');
+            const percent = (bossHP / BOSS_MAX_HP) * 100;
+            fill.style.width = percent + '%';
+
+            if (percent < 30) {
+                fill.style.background = 'linear-gradient(to right, #ff0000, #ff4757)';
+            } else if (percent < 60) {
+                fill.style.background = 'linear-gradient(to right, #ff9800, #ffeb3b)';
+            }
+        }
+
+        function takeBossDamage() {
+            document.getElementById('gameContainer').classList.add('flash-red');
+            setTimeout(() => {
+                document.getElementById('gameContainer').classList.remove('flash-red');
+            }, 300);
+
+            const runner = document.getElementById('runner');
+            runner.classList.add('shake');
+            setTimeout(() => runner.classList.remove('shake'), 400);
+
+            hearts--;
+            updateHeartsUI();
+
+            if (hearts <= 0) {
+                endBossFight(false);
+            }
+        }
+
+        // ================= SHIELD PHASE FUNCTIONS =================
+
+        function activateShieldPhase() {
+            shieldPhaseActive = true;
+            hitsSinceLastShield = 0;
+            shieldPhaseAnswered = false;
+
+            // Pause boss movement and shooting
+            // Boss bullets continue falling but no new ones spawn
+
+            // Show shield visual
+            document.getElementById('bossShield').style.display = 'block';
+
+            // Generate question
+            generateShieldQuestion();
+
+            // Show UI
+            showShieldPhaseUI();
+
+            // Start timer
+            startShieldTimer();
+        }
+
+        function generateShieldQuestion() {
+            // Pick a random character from gameData
+            const targetIndex = Math.floor(Math.random() * gameData.length);
+            const target = gameData[targetIndex];
+
+            // Get 2 wrong characters (different from target)
+            const otherChars = gameData.filter((item, idx) => idx !== targetIndex);
+            const shuffledOthers = shuffleArray(otherChars);
+            const wrongChars = shuffledOthers.slice(0, 2);
+
+            // Combine and shuffle
+            const allOptions = shuffleArray([
+                { char: target.char, pinyin: target.pinyin, correct: true },
+                { char: wrongChars[0].char, pinyin: wrongChars[0].pinyin, correct: false },
+                { char: wrongChars[1].char, pinyin: wrongChars[1].pinyin, correct: false }
+            ]);
+
+            // Assign lanes (0, 1, 2)
+            allOptions.forEach((opt, idx) => {
+                opt.lane = idx;
+            });
+
+            currentShieldQuestion = {
+                targetChar: target.char,
+                targetPinyin: target.pinyin,
+                options: allOptions
+            };
+        }
+
+        function showShieldPhaseUI() {
+            // Show pinyin display
+            const pinyinDisplay = document.getElementById('pinyinDisplay');
+            document.getElementById('pinyinText').textContent = currentShieldQuestion.targetPinyin;
+            pinyinDisplay.style.display = 'flex';
+
+            // Show character options
+            const container = document.getElementById('charOptionsContainer');
+            container.innerHTML = '';
+
+            currentShieldQuestion.options.forEach((opt, idx) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'char-option';
+                optionDiv.dataset.lane = opt.lane;
+                optionDiv.dataset.correct = opt.correct;
+                optionDiv.innerHTML = `
+                    <div class="char-text">${opt.char}</div>
+                    <div class="char-label">${['KIRI', 'TENGAH', 'KANAN'][idx]}</div>
+                `;
+
+                // Click/tap handler
+                optionDiv.addEventListener('click', () => {
+                    if (!shieldPhaseActive || shieldPhaseAnswered) return;
+                    // Move runner to this lane
+                    runnerLane = opt.lane;
+                    updateRunnerPosition();
+                    updateLaneHighlight();
+                    // Then submit answer
+                    submitShieldAnswer();
+                });
+
+                container.appendChild(optionDiv);
+            });
+
+            container.style.display = 'flex';
+
+            // Show arrow indicator
+            document.getElementById('arrowIndicator').style.display = 'flex';
+
+            // Show timer bar
+            document.getElementById('shieldTimerBar').style.display = 'block';
+
+            // Show lane highlights
+            for (let i = 0; i < 3; i++) {
+                document.getElementById('laneHighlight' + i).style.display = 'block';
+            }
+            updateLaneHighlight();
+        }
+
+        function hideShieldPhaseUI() {
+            document.getElementById('pinyinDisplay').style.display = 'none';
+            document.getElementById('charOptionsContainer').style.display = 'none';
+            document.getElementById('charOptionsContainer').innerHTML = '';
+            document.getElementById('arrowIndicator').style.display = 'none';
+            document.getElementById('shieldTimerBar').style.display = 'none';
+            document.getElementById('bossShield').style.display = 'none';
+
+            for (let i = 0; i < 3; i++) {
+                document.getElementById('laneHighlight' + i).style.display = 'none';
+                document.getElementById('laneHighlight' + i).classList.remove('active');
+            }
+        }
+
+        function updateLaneHighlight() {
+            for (let i = 0; i < 3; i++) {
+                const el = document.getElementById('laneHighlight' + i);
+                if (i === runnerLane) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            }
+
+            // Also highlight the char option
+            const options = document.querySelectorAll('.char-option');
+            options.forEach((opt, idx) => {
+                if (parseInt(opt.dataset.lane) === runnerLane) {
+                    opt.classList.add('highlighted');
+                } else {
+                    opt.classList.remove('highlighted');
+                }
+            });
+        }
+
+        function startShieldTimer() {
+            if (shieldPhaseTimer) clearInterval(shieldPhaseTimer);
+            shieldTimeLeft = 100;
+            updateShieldTimerBar();
+
+            shieldPhaseTimer = setInterval(() => {
+                if (!shieldPhaseActive || shieldPhaseAnswered) return;
+
+                shieldTimeLeft -= 100 / (SHIELD_PHASE_DURATION * 10);
+                updateShieldTimerBar();
+
+                if (shieldTimeLeft <= 0) {
+                    clearInterval(shieldPhaseTimer);
+                    // Time's up - treat as wrong answer
+                    handleShieldWrongAnswer();
+                }
+            }, 100);
+        }
+
+        function updateShieldTimerBar() {
+            const fill = document.getElementById('shieldTimerFill');
+            fill.style.width = shieldTimeLeft + '%';
+        }
+
+        function submitShieldAnswer() {
+            if (!shieldPhaseActive || shieldPhaseAnswered) return;
+            shieldPhaseAnswered = true;
+            clearInterval(shieldPhaseTimer);
+
+            // Find the option at current lane
+            const selectedOption = currentShieldQuestion.options.find(opt => opt.lane === runnerLane);
+
+            if (selectedOption && selectedOption.correct) {
+                handleShieldCorrectAnswer();
+            } else {
+                handleShieldWrongAnswer();
+            }
+        }
+
+        function handleShieldCorrectAnswer() {
+            // Visual: character flies to boss
+            const container = document.getElementById('gameContainer');
+            const runner = document.getElementById('runner');
+            const runnerRect = runner.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const flyingChar = document.createElement('div');
+            flyingChar.className = 'flying-char';
+            flyingChar.textContent = currentShieldQuestion.targetChar;
+            flyingChar.style.left = (runnerRect.left - containerRect.left + runnerRect.width / 2 - 20) + 'px';
+            flyingChar.style.top = (runnerRect.top - containerRect.top) + 'px';
+            container.appendChild(flyingChar);
+
+            // Shield break effect
+            setTimeout(() => {
+                const shield = document.getElementById('bossShield');
+                const breakEffect = document.createElement('div');
+                breakEffect.className = 'shield-break';
+                shield.appendChild(breakEffect);
+
+                createExplosion(
+                    containerRect.width / 2,
+                    containerRect.height * 0.1
+                );
+
+                setTimeout(() => {
+                    breakEffect.remove();
+                    flyingChar.remove();
+
+                    // Resume boss fight
+                    shieldPhaseActive = false;
+                    hideShieldPhaseUI();
+
+                    // Bonus: boss takes extra damage for shield break
+                    bossHP -= 10;
+                    if (bossHP < 0) bossHP = 0;
+                    updateBossHealthBar();
+
+                    if (bossHP <= 0) {
+                        bossDefeated();
+                    }
+                }, 600);
+            }, 800);
+        }
+
+        function handleShieldWrongAnswer() {
+            // Highlight wrong option
+            const options = document.querySelectorAll('.char-option');
+            options.forEach(opt => {
+                if (parseInt(opt.dataset.lane) === runnerLane) {
+                    opt.classList.add('wrong');
+                }
+            });
+
+            // Boss sends shockwave
+            setTimeout(() => {
+                sendShockwave();
+
+                setTimeout(() => {
+                    // ============================================
+                    // SHIELD STAYS ACTIVE - Player gets another try!
+                    // ============================================
+                    
+                    // Remove wrong highlight from options
+                    options.forEach(opt => opt.classList.remove('wrong'));
+                    
+                    // Reset so player can try again
+                    shieldPhaseAnswered = false;
+                    
+                    // Restart the timer for another attempt
+                    startShieldTimer();
+                    
+                    // Optional: Add visual feedback that it's a retry
+                    const pinyinText = document.getElementById('pinyinText');
+                    const originalText = pinyinText.textContent;
+                    pinyinText.textContent = "❌ SALAH! COBA LAGI!";
+                    pinyinText.style.color = "#FF4757";
+                    
+                    setTimeout(() => {
+                        pinyinText.textContent = originalText;
+                        pinyinText.style.color = "#FFD700";
+                    }, 1500);
+                    
+                    // Still punish player with damage
+                    takeBossDamage();
+                    
+                    // Boss still heals slightly
+                    bossHP = Math.min(bossHP + 5, BOSS_MAX_HP);  // Reduced heal (was 15)
+                    updateBossHealthBar();
+                    
+                }, 1000);
+            }, 500);
+        }
+
+        function sendShockwave() {
+            const container = document.getElementById('gameContainer');
+            const shockwave = document.createElement('div');
+            shockwave.className = 'shockwave';
+            shockwave.style.left = '0';
+            shockwave.style.top = '15%';
+            container.appendChild(shockwave);
+
+            shockwaves.push({
+                element: shockwave,
+                y: container.clientHeight * 0.15
+            });
+
+            // Check collision with runner after animation
+            setTimeout(() => {
+                const runner = document.getElementById('runner');
+                const runnerRect = runner.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const runnerY = runnerRect.top - containerRect.top + runnerRect.height / 2;
+
+                // Shockwave reaches bottom around 80%
+                const shockwaveBottomY = container.clientHeight * 0.8;
+
+                // If runner is in the path (which they always are vertically)
+                // The shockwave covers full width, so horizontal position doesn't matter
+                // But let's check if runner is roughly at the shockwave's vertical position
+                if (runnerY > shockwaveBottomY - 50 && runnerY < shockwaveBottomY + 50) {
+                    // Extra damage from direct hit
+                    // takeBossDamage() is already called in handleShieldWrongAnswer
+                }
+
+                shockwave.remove();
+            }, 600);
+        }
+
+        function bossDefeated() {
+            bossFightActive = false;
+            shieldPhaseActive = false;
+
+            clearInterval(bossMoveInterval);
+            clearInterval(bossShootInterval);
+            clearInterval(shieldPhaseTimer);
+
+            const tank = document.getElementById('bossTank');
+            const tankRect = tank.getBoundingClientRect();
+            const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+            const centerX = tankRect.left - containerRect.left + tankRect.width / 2;
+            const centerY = tankRect.top - containerRect.top + tankRect.height / 2;
+
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const offsetX = (Math.random() - 0.5) * 100;
+                    const offsetY = (Math.random() - 0.5) * 80;
+                    createExplosion(centerX + offsetX, centerY + offsetY);
+                }, i * 150);
+            }
+
+            setTimeout(() => {
+                tank.style.display = 'none';
+                document.getElementById('bossHealthBar').style.display = 'none';
+                document.getElementById('shootBtn').style.display = 'none';
+                document.getElementById('bossShield').style.display = 'none';
+                hideShieldPhaseUI();
+
+                bossBullets.forEach(b => b.element.remove());
+                runnerBullets.forEach(b => b.element.remove());
+                bossBullets = [];
+                runnerBullets = [];
+
+                score += 1000;
+
+                document.getElementById('bossVictoryScore').textContent = score;
+                document.getElementById('bossVictoryScreen').classList.remove('hidden');
+
+                for (let i = 0; i < 80; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.background = ['#FF4757', '#FFD700', '#00E676', '#2196F3', '#9C27B0', '#FF9800'][Math.floor(Math.random() * 6)];
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    confetti.style.width = (6 + Math.random() * 8) + 'px';
+                    confetti.style.height = confetti.style.width;
+                    document.getElementById('gameContainer').appendChild(confetti);
+                }
+            }, 1500);
+        }
+
+        function endBossFight(victory) {
+            bossFightActive = false;
+            shieldPhaseActive = false;
+            clearInterval(bossMoveInterval);
+            clearInterval(bossShootInterval);
+            clearInterval(shieldPhaseTimer);
+
+            document.getElementById('bossTank').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('shootBtn').style.display = 'none';
+            document.getElementById('bossShield').style.display = 'none';
+            hideShieldPhaseUI();
+
+            bossBullets.forEach(b => { if (b.element) b.element.remove(); });
+            runnerBullets.forEach(b => { if (b.element) b.element.remove(); });
+            bossBullets = [];
+            runnerBullets = [];
+
+            // Clear turbo state
+            if (turboActive) {
+                turboActive = false;
+                clearTimeout(turboTimer);
+                document.getElementById('turboIndicator').style.display = 'none';
+                removeTurboSpeedLines();
+            }
+            if (turboCooldownActive) {
+                turboCooldownActive = false;
+                clearTimeout(turboCooldownTimer);
+                const bar = document.getElementById('turboCooldownBar');
+                if (bar) bar.remove();
+            }
+
+            if (!victory) {
+                const runner = document.getElementById('runner');
+                runner.classList.add('fall');
+
+                setTimeout(() => {
+                    // ============================================
+                    // CUSTOM BOSS GAME OVER SCREEN
+                    // ============================================
+                    
+                    // Hide the normal game over screen first
+                    document.getElementById('gameOverScreen').classList.add('hidden');
+                    
+                    // Show boss-specific defeat screen
+                    showBossDefeatScreen();
+                    
+                }, 800);
+            }
+        }
+
+        // ================= EVENT LISTENERS =================
+
+        document.addEventListener('keydown', function(e) {
+            // Handle boss fight controls
+            if (bossFightActive) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    e.preventDefault();
+                    moveLeft();
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    moveRight();
+                } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                    e.preventDefault();
+                    runnerShoot();
+                } else if (shieldPhaseActive && (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S')) {
+                    e.preventDefault();
+                    submitShieldAnswer();
+                }
+                return;
+            }
+
+            // Normal game controls
+            if (!isGameActive) return;
+
+            const carConfig = CAR_CONFIG[selectedCarType];
+
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                moveLeft();
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                moveRight();
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                // Sports Car: ↑ activates turbo
+                if (carConfig.ability === 'turbo') {
+                    activateTurbo();
+                }
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                // ↓ activates slow-motion skill (collect ⏱️ items first)
+                activateSkill();
+            }
+        });
+
+        // Shoot button for mobile
+        document.getElementById('shootBtn').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (shieldPhaseActive) {
+                submitShieldAnswer();
+            } else {
+                runnerShoot();
+            }
+            this.style.transform = 'scale(0.9)';
+        }, { passive: false });
+
+        document.getElementById('shootBtn').addEventListener('touchend', function(e) {
+            e.preventDefault();
+            this.style.transform = '';
+        }, { passive: false });
+
+        document.getElementById('shootBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (shieldPhaseActive) {
+                submitShieldAnswer();
+            } else {
+                runnerShoot();
+            }
+        });
+
+        // Mobile button controls (replaces swipe)
+        function setupMobileButtons() {
+            const btnLeft = document.getElementById('btnLeft');
+            const btnRight = document.getElementById('btnRight');
+            const btnSlowMo = document.getElementById('btnSlowMo');
+            const btnTurbo = document.getElementById('btnTurbo');
+
+            // Left button
+            btnLeft.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = 'scale(0.92)';
+                if (isGameActive || bossFightActive) moveLeft();
+            }, { passive: false });
+
+            btnLeft.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.style.transform = '';
+            }, { passive: false });
+
+            // Right button
+            btnRight.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = 'scale(0.92)';
+                if (isGameActive || bossFightActive) moveRight();
+            }, { passive: false });
+
+            btnRight.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.style.transform = '';
+            }, { passive: false });
+
+            // Slow Mo button
+            btnSlowMo.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = 'translateX(-50%) scale(0.92)';
+                activateSkill();
+            }, { passive: false });
+
+            btnSlowMo.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.style.transform = 'translateX(-50%)';
+            }, { passive: false });
+
+            // Turbo button (Sports car only)
+            btnTurbo.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = 'scale(0.92)';
+                activateTurbo();
+            }, { passive: false });
+
+            btnTurbo.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.style.transform = '';
+            }, { passive: false });
+
+            // Also support mouse clicks for testing on desktop
+            btnLeft.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                if (isGameActive || bossFightActive) moveLeft();
+            });
+
+            btnRight.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                if (isGameActive || bossFightActive) moveRight();
+            });
+
+            btnSlowMo.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                activateSkill();
+            });
+
+            btnTurbo.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                activateTurbo();
+            });
+        }
+
+        // Initialize mobile buttons
+        setupMobileButtons();
+
+        function showBossDefeatScreen() {
+            // Create custom boss defeat overlay
+            const container = document.getElementById('gameContainer');
+            
+            // Remove existing boss defeat screen if any
+            const existing = document.getElementById('bossDefeatScreen');
+            if (existing) existing.remove();
+            
+            // Create new defeat screen
+            const defeatScreen = document.createElement('div');
+            defeatScreen.id = 'bossDefeatScreen';
+            defeatScreen.className = 'screen';
+            defeatScreen.style.background = 'rgba(10, 10, 26, 0.98)';
+            defeatScreen.style.zIndex = '200';
+            defeatScreen.innerHTML = `
+                <h2 style="color: #FF4757; font-size: 36px; margin-bottom: 15px; text-shadow: 0 0 20px rgba(255,71,87,0.5);">
+                    💥 KAMU KALAH!
+                </h2>
+                <p style="color: #ff6b6b; font-size: 22px; margin: 10px 0; font-weight: bold;">
+                    你输了!
+                </p>
+                <p style="color: #FFD700; font-size: 28px; margin: 15px 0; text-shadow: 0 0 15px rgba(255,215,0,0.4);">
+                    Tank terlalu kuat
+                </p>
+                <p style="color: #ff4757; font-size: 32px; margin: 10px 0; font-weight: bold; letter-spacing: 2px;">
+                    太强了!
+                </p>
+                <p style="color: #888; font-size: 16px; margin-top: 20px;">
+                    Level dilewati: <span style="color: #00E676; font-size: 20px;">32</span> / 32
+                </p>
+                <p style="color: #888; font-size: 16px; margin: 5px 0;">
+                    Boss: <span style="color: #FF4757;">❌ GAGAL</span>
+                </p>
+                <p style="margin-top: 15px; color: #aaa; font-size: 14px;">Score Akhir</p>
+                <p style="font-size: 48px; color: #FFD700; margin: 5px 0; font-weight: bold;">
+                    ${score}
+                </p>
+                <button class="btn btn-retry" onclick="closeBossDefeatScreen(); startGame();" style="margin-top: 25px;">
+                    COBA LAGI
+                </button>
+            `;
+            
+            container.appendChild(defeatScreen);
+        }
+
+        function closeBossDefeatScreen() {
+            const screen = document.getElementById('bossDefeatScreen');
+            if (screen) screen.remove();
+        }
+
+        // ================= CAR SELECTION FUNCTIONS =================
+
+        function selectCar(card) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.car-card').forEach(c => c.classList.remove('selected'));
+            
+            // Add to clicked card
+            card.classList.add('selected');
+            
+            // Save selection
+            selectedCarType = card.dataset.car;
+            
+            // Update preview color
+            updateCarColor();
+        }
+
+        function updateCarColor() {
+            const colors = CAR_CONFIG[selectedCarType];
+            
+            // Update image source
+            const carImage = document.getElementById('carImage');
+            if (carImage) {
+                carImage.src = colors.image;
+            }
+            
+            // Keep CSS colors as fallback / for exhaust effects
+            const chassis = document.querySelector('.car-chassis');
+            if (chassis) {
+                chassis.style.setProperty('--car-color-primary', colors.primary);
+                chassis.style.setProperty('--car-color-secondary', colors.secondary);
+            }
+        }
+
+        function confirmCarSelection() {
+            // Apply selected car color first
+            updateCarColor();
+            
+            // Hide car select screen
+            document.getElementById('carSelectScreen').classList.add('hidden');
+            
+            // DIRECTLY START THE GAME (not just show start screen!)
+            startGame();
+        }
+
+        function showCarSelection() {
+            document.getElementById('carSelectScreen').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('finishScreen').classList.add('hidden');
+            document.getElementById('bossScreen').classList.add('hidden');
+            document.getElementById('bossVictoryScreen').classList.add('hidden');
+        }
+        
+        function carExplosionEffect() {
+            const runner = document.getElementById('runner');
+            const runnerRect = runner.getBoundingClientRect();
+            const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+            const centerX = runnerRect.left - containerRect.left + runnerRect.width / 2;
+            const centerY = runnerRect.top - containerRect.top + runnerRect.height / 2;
+
+            // Create multiple explosions like the tank boss
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const offsetX = (Math.random() - 0.5) * 60;
+                    const offsetY = (Math.random() - 0.5) * 60;
+                    createExplosion(centerX + offsetX, centerY + offsetY);
+                }, i * 100);
+            }
+
+            // Create sparks
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    spark.style.left = (centerX + (Math.random() - 0.5) * 50) + 'px';
+                    spark.style.top = (centerY + (Math.random() - 0.5) * 50) + 'px';
+                    spark.style.width = (10 + Math.random() * 15) + 'px';
+                    spark.style.height = spark.style.width;
+                    spark.style.background = ['#ff4757', '#ffd700', '#ff6b35', '#ff0000'][Math.floor(Math.random() * 4)];
+                    document.getElementById('gameContainer').appendChild(spark);
+                    setTimeout(() => spark.remove(), 400);
+                }, i * 80);
+            }
+        }
+        function updateRoadSpeed() {
+            // Base speed increases with level
+            const speedMultiplier = 1 + (currentLevel * 0.05);
+            
+            // Update CSS animation durations
+            const roadLines = document.querySelectorAll('.road-line-v');
+            roadLines.forEach(line => {
+                line.style.animationDuration = (0.5 / speedMultiplier) + 's';
+            });
+            
+            const floor = document.querySelector('.tunnel-floor');
+            if (floor) {
+                floor.style.animationDuration = (0.3 / speedMultiplier) + 's';
+            }
+            
+            const walls = document.querySelectorAll('.wall-scroll');
+            walls.forEach(wall => {
+                wall.style.animationDuration = (1 / speedMultiplier) + 's';
+            });
+        }
+        function checkTruckArmorRegen() {
+            const carConfig = CAR_CONFIG[selectedCarType];
+            if (carConfig.ability !== 'armor') return;
+            if (truckArmorActive) return; // Already has armor
+            
+            // Check if we've passed a 5-level threshold since last regen
+            const levelsSinceRegen = currentLevel - truckArmorRegenLevel;
+            if (levelsSinceRegen >= carConfig.armorRegenInterval) {
+                truckArmorActive = true;
+                truckArmorRegenLevel = currentLevel;
+                document.getElementById('shieldArmorIndicator').style.display = 'flex';
+                const shield = document.getElementById('truckShieldEffect');
+                shield.style.display = 'block';
+                shield.classList.remove('shield-break-effect');
+                shield.style.opacity = '0';
+                shield.style.transform = 'scale(0.5)';
+                shield.style.transition = 'all 0.5s ease-out';
+                setTimeout(() => {
+                    shield.style.opacity = '1';
+                    shield.style.transform = 'scale(1)';
+                    setTimeout(() => {
+                        shield.style.transition = '';
+                    }, 500);
+                }, 50);
+                
+                // Show regen popup
+                const popup = document.createElement('div');
+                popup.className = 'score-popup';
+                popup.textContent = '🛡️ ARMOR REGEN!';
+                popup.style.left = '50%';
+                popup.style.top = '40%';
+                popup.style.color = '#00E5FF';
+                popup.style.fontSize = '22px';
+                popup.style.transform = 'translateX(-50%)';
+                document.getElementById('gameContainer').appendChild(popup);
+                setTimeout(() => popup.remove(), 1200);
+            }
+        }
+        function resetLevelSpeed() {
+            // Reset to car's base speed
+            const carConfig = CAR_CONFIG[selectedCarType];
+            doorSpeed = carConfig.baseDoorSpeed;
+            originalDoorSpeed = carConfig.baseDoorSpeed;
+            
+            // Reset turbo state
+            turboActive = false;
+            if (turboTimer) {
+                clearTimeout(turboTimer);
+                turboTimer = null;
+            }
+            
+            // Reset slow motion state
+            skillActive = false;
+            if (skillTimer) {
+                clearTimeout(skillTimer);
+                skillTimer = null;
+            }
+            
+            // Reset visual effects
+            document.getElementById('turboIndicator').style.display = 'none';
+            document.getElementById('skillActive').style.display = 'none';
+            document.getElementById('gameContainer').style.filter = 'none';
+            removeTurboSpeedLines();
+        }
+        function startTurboTrail() {
+            if (selectedCarType !== 'sports') return;
+            
+            trailContainer = document.getElementById('turboTrail');
+            if (!trailContainer) return;
+            
+            const runner = document.getElementById('runner');
+            runner.classList.add('turbo-active');
+            
+            // Spawn trail particles rapidly
+            trailInterval = setInterval(() => {
+                if (!turboActive || !isGameActive) {
+                    stopTurboTrail();
+                    return;
+                }
+                spawnTrailParticle();
+            }, 60); // Every 60ms for dense trail
+        }
+
+        function stopTurboTrail() {
+            if (trailInterval) {
+                clearInterval(trailInterval);
+                trailInterval = null;
+            }
+            
+            const runner = document.getElementById('runner');
+            runner.classList.remove('turbo-active');
+            
+            // Clear remaining particles after they fade
+            if (trailContainer) {
+                setTimeout(() => {
+                    trailContainer.innerHTML = '';
+                }, 500);
+            }
+        }
+
+        function spawnTrailParticle() {
+            if (!trailContainer) return;
+            
+            const runner = document.getElementById('runner');
+            const runnerRect = runner.getBoundingClientRect();
+            
+            // Random particle type
+            const types = ['red', 'orange', 'yellow', 'blue'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            // Create main glow particle
+            const particle = document.createElement('div');
+            particle.className = `trail-particle ${type}`;
+            
+            // Position at exhaust area (bottom center of car)
+            const size = 8 + Math.random() * 12;
+            const left = 30 + Math.random() * 40; // 30-70% width
+            const top = 75 + Math.random() * 15;  // Near exhaust
+            
+            particle.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                left: ${left}%;
+                top: ${top}%;
+            `;
+            
+            trailContainer.appendChild(particle);
+            
+            // Occasionally add a streak
+            if (Math.random() < 0.4) {
+                const streak = document.createElement('div');
+                streak.className = 'trail-streak';
+                const streakWidth = 20 + Math.random() * 40;
+                const streakLeft = 20 + Math.random() * 60;
+                streak.style.cssText = `
+                    width: ${streakWidth}px;
+                    left: ${streakLeft}%;
+                    top: ${80 + Math.random() * 10}%;
+                `;
+                trailContainer.appendChild(streak);
+            }
+            
+            // Cleanup after animation
+            setTimeout(() => {
+                if (particle.parentNode) particle.remove();
+            }, 400);
+            
+            setTimeout(() => {
+                const streaks = trailContainer.querySelectorAll('.trail-streak');
+                streaks.forEach(s => { if (s.parentNode) s.remove(); });
+            }, 300);
+        }
+
+        function clearAllTrails() {
+            if (trailContainer) {
+                trailContainer.innerHTML = '';
+            }
+        }                        
+        // Initialize
+        initSpeedLines();
+    </script>
+</body>
+</html>

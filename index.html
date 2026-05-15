@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>学生词 - Chinese Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #FFD700;
+            --primary-dark: #FFA000;
+            --secondary: #FF4757;
+            --accent: #00E676;
+            --bg-dark: #0a0a1a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252540;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaacc;
+            --text-muted: #666688;
+            --border: rgba(255, 215, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Noto Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ========== DASHBOARD ========== */
+        .dashboard {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 71, 87, 0.03) 0%, transparent 50%),
+                var(--bg-dark);
+        }
+
+        .dashboard-header {
+            text-align: center;
+            padding: 30px 0 40px;
+            position: relative;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .app-icon {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 42px;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: 40px;
+        }
+
+        .menu-card {
+            background: linear-gradient(145deg, var(--bg-card) 0%, #151528 100%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .menu-card:active {
+            transform: scale(0.96);
+        }
+
+        .menu-card:hover::before,
+        .menu-card:active::before {
+            opacity: 1;
+        }
+
+        .menu-card.game-card {
+            border-color: rgba(255, 71, 87, 0.3);
+        }
+
+        .menu-card.game-card::before {
+            background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+        }
+
+        .menu-card.dict-card {
+            border-color: rgba(0, 230, 118, 0.3);
+        }
+
+        .menu-card.dict-card::before {
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .menu-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            position: relative;
+        }
+
+        .game-card .menu-icon {
+            background: linear-gradient(135deg, rgba(255, 71, 87, 0.2) 0%, rgba(255, 71, 87, 0.05) 100%);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.15);
+        }
+
+        .dict-card .menu-icon {
+            background: linear-gradient(135deg, rgba(0, 230, 118, 0.2) 0%, rgba(0, 230, 118, 0.05) 100%);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 230, 118, 0.15);
+        }
+
+        .menu-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .game-card .menu-title {
+            color: #ff6b6b;
+        }
+
+        .dict-card .menu-title {
+            color: #00E676;
+        }
+
+        .menu-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .menu-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* ========== SECTIONS ========== */
+        .section {
+            display: none;
+            min-height: 100vh;
+            background: var(--bg-dark);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .section.game-section {
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            padding: 0;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* ========== NAV BAR ========== */
+        .nav-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Overlay nav for game section - only back button, minimal */
+        .game-section .nav-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-bottom: none;
+            padding: 8px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .game-section .nav-bar > * {
+            pointer-events: auto;
+        }
+
+        /* Hide title and subtitle in game section */
+        .game-section .nav-title,
+        .game-section .nav-subtitle {
+            display: none;
+        }
+
+        .game-section .nav-back {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(10, 10, 26, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 4px;
+            margin-left: 4px;
+        }
+
+        .game-section .nav-back:active {
+            transform: scale(0.9);
+            background: rgba(10, 10, 26, 0.7);
+        }
+
+        .nav-back {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .nav-back:active {
+            transform: scale(0.9);
+            background: var(--bg-card-hover);
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .nav-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ========== GAME SECTION ========== */
+        .game-wrapper {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            height: 100vh;
+        }
+
+        .game-wrapper iframe {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            border: none;
+            display: block;
+        }
+
+        /* ========== DICTIONARY SECTION ========== */
+        .dict-container {
+            padding: 16px 16px 100px;
+            max-width: 600px;
+            margin: 0 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .search-box {
+            position: sticky;
+            top: 73px;
+            z-index: 90;
+            background: var(--bg-dark);
+            padding: 12px 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear.visible {
+            display: flex;
+        }
+
+        .dict-stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-chip .count {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* Word Cards */
+        .word-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .word-card {
+            background: linear-gradient(145deg, var(--bg-card) 0%, #151528 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .word-card:active {
+            transform: scale(0.98);
+        }
+
+        .word-card-header {
+            padding: 20px 20px 16px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .word-main {
+            flex: 1;
+        }
+
+        .word-char {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1.2;
+            margin-bottom: 4px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .word-pinyin {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .word-meaning {
+            font-size: 16px;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .word-number {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .word-expand-icon {
+            font-size: 20px;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+            margin-left: 4px;
+        }
+
+        .word-card.expanded .word-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .word-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), padding 0.3s;
+        }
+
+        .word-card.expanded .word-details {
+            max-height: 400px;
+            padding: 0 20px 20px;
+        }
+
+        .detail-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .detail-section:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .example-box {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+
+        .example-chinese {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .example-pinyin {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .example-indo {
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tag.highlight {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: rgba(255, 215, 0, 0.2);
+            color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .word-card {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        /* Loading */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 215, 0, 0.5); }
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-icon">📚</div>
+        <div class="loading-text">MEMUAT...</div>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="dashboard" id="dashboard">
+        <div class="dashboard-header">
+            <div class="app-icon">📚</div>
+            <h1 class="app-title">学生词</h1>
+            <p class="app-subtitle">Xuéshēng Cí</p>
+        </div>
+
+        <div class="menu-grid">
+            <div class="menu-card game-card" onclick="openGame()">
+                <span class="menu-badge">MAIN</span>
+                <div class="menu-icon">🎮</div>
+                <div class="menu-title">Game</div>
+                <div class="menu-desc">Main & belajar<br>melalui permainan</div>
+            </div>
+
+            <div class="menu-card dict-card" onclick="openDictionary()">
+                <span class="menu-badge">BELAJAR</span>
+                <div class="menu-icon">📖</div>
+                <div class="menu-title">Kamus</div>
+                <div class="menu-desc">Daftar kosakata<br>dengan contoh kalimat</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== GAME SECTION ========== -->
+    <div class="section game-section" id="gameSection">
+        <div class="nav-bar">
+            <div class="nav-back" onclick="goBack()">←</div>
+        </div>
+        <div class="game-wrapper">
+            <iframe id="gameFrame" src="VERSION6_TURBO_UP.html" allow="fullscreen"></iframe>
+        </div>
+    </div>
+
+    <!-- ========== DICTIONARY SECTION ========== -->
+    <div class="section" id="dictSection">
+        <div class="nav-bar">
+            <div class="nav-back" onclick="goBack()">←</div>
+            <div>
+                <div class="nav-title">📖 Kamus</div>
+                <div class="nav-subtitle">Kosakata & Contoh Kalimat</div>
+            </div>
+        </div>
+
+        <div class="dict-container">
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput"
+                        placeholder="Cari aksara, pinyin, atau arti..."
+                        oninput="handleSearch(this.value)"
+                    >
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+                </div>
+            </div>
+
+            <div class="dict-stats" id="dictStats">
+                <div class="stat-chip">
+                    <span>📚</span>
+                    <span>Total: <span class="count" id="totalWords">0</span></span>
+                </div>
+                <div class="stat-chip">
+                    <span>🔍</span>
+                    <span>Hasil: <span class="count" id="resultCount">0</span></span>
+                </div>
+            </div>
+
+            <div class="word-list" id="wordList"></div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="icon">🔍</div>
+                <p>Tidak ada hasil untuk pencarian ini</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= DATA =================
+        const vocabularyData = [
+            {
+                char: "学艺",
+                pinyin: "xué yì",
+                meaning: "Belajar keahlian",
+                examples: [
+                    { cn: "他在学艺方面很有天赋。", py: "Tā zài xué yì fāngmiàn hěn yǒu tiānfù.", id: "Dia sangat berbakat dalam belajar keahlian." },
+                    { cn: "学艺需要耐心和毅力。", py: "Xué yì xūyào nàixīn hé yìlì.", id: "Belajar keahlian membutuhkan kesabaran dan ketekunan." }
+                ],
+                tags: ["verba", "pendidikan"]
+            },
+            {
+                char: "电梯",
+                pinyin: "diàn tī",
+                meaning: "Lift / Eskalator",
+                examples: [
+                    { cn: "请坐电梯到十楼。", py: "Qǐng zuò diàn tī dào shí lóu.", id: "Tolong naik lift ke lantai sepuluh." },
+                    { cn: "电梯坏了，我们走楼梯吧。", py: "Diàn tī huài le, wǒmen zǒu lóutī ba.", id: "Lift rusak, ayo kita naik tangga." }
+                ],
+                tags: ["kata benda", "bangunan"]
+            },
+            {
+                char: "然后",
+                pinyin: "rán hòu",
+                meaning: "Kemudian",
+                examples: [
+                    { cn: "我先吃饭，然后去看电影。", py: "Wǒ xiān chīfàn, rán hòu qù kàn diànyǐng.", id: "Saya makan dulu, kemudian nonton film." },
+                    { cn: "做完作业，然后才能玩。", py: "Zuò wán zuòyè, rán hòu cáinéng wán.", id: "Selesaikan PR dulu, baru boleh main." }
+                ],
+                tags: ["konjungsi", "waktu"]
+            },
+            {
+                char: "挂号",
+                pinyin: "guà hào",
+                meaning: "Daftar Berobat",
+                examples: [
+                    { cn: "请先挂号，再看病。", py: "Qǐng xiān guà hào, zài kàn bìng.", id: "Silakan daftar dulu, baru berobat." },
+                    { cn: "挂号处在哪里？", py: "Guà hào chù zài nǎlǐ?", id: "Di mana tempat pendaftaran?" }
+                ],
+                tags: ["verba", "kesehatan"]
+            },
+            {
+                char: "看病",
+                pinyin: "kàn bìng",
+                meaning: "Berobat",
+                examples: [
+                    { cn: "我明天要去看病。", py: "Wǒ míngtiān yào qù kàn bìng.", id: "Saya besok mau berobat." },
+                    { cn: "他去医院看病了。", py: "Tā qù yīyuàn kàn bìng le.", id: "Dia pergi ke rumah sakit berobat." }
+                ],
+                tags: ["verba", "kesehatan"]
+            },
+            {
+                char: "获得",
+                pinyin: "huò dé",
+                meaning: "Mendapatkan",
+                examples: [
+                    { cn: "他获得了第一名。", py: "Tā huòdé le dì yī míng.", id: "Dia mendapatkan juara pertama." },
+                    { cn: "努力学习才能获得好成绩。", py: "Nǔlì xuéxí cáinéng huòdé hǎo chéngjì.", id: "Belajar giat baru bisa mendapat nilai bagus." }
+                ],
+                tags: ["verba", "pencapaian"]
+            },
+            {
+                char: "凤凰",
+                pinyin: "fèng huáng",
+                meaning: "Burung Phoenix",
+                examples: [
+                    { cn: "凤凰是神话中的神鸟。", py: "Fènghuáng shì shénhuà zhōng de shén niǎo.", id: "Phoenix adalah burung sakti dalam mitologi." },
+                    { cn: "凤凰涅槃，浴火重生。", py: "Fènghuáng nièpán, yù huǒ chóngshēng.", id: "Phoenix bangkit dari abu, terlahir kembali dari api." }
+                ],
+                tags: ["kata benda", "mitologi"]
+            },
+            {
+                char: "耐心",
+                pinyin: "nài xīn",
+                meaning: "Kesabaran",
+                examples: [
+                    { cn: "老师对学生很有耐心。", py: "Lǎoshī duì xuéshēng hěn yǒu nàixīn.", id: "Guru sangat sabar dengan murid-murid." },
+                    { cn: "做事要有耐心。", py: "Zuò shì yào yǒu nàixīn.", id: "Bekerja harus ada kesabaran." }
+                ],
+                tags: ["kata benda", "sifat"]
+            },
+            {
+                char: "猫头鹰",
+                pinyin: "māo tóu yīng",
+                meaning: "Burung Hantu",
+                examples: [
+                    { cn: "猫头鹰晚上才出来活动。", py: "Māotóuyīng wǎnshang cái chūlái huódòng.", id: "Burung hantu baru keluar aktivitas di malam hari." },
+                    { cn: "那只猫头鹰的眼睛很大。", py: "Nà zhī māotóuyīng de yǎnjing hěn dà.", id: "Mata burung hantu itu sangat besar." }
+                ],
+                tags: ["kata benda", "hewan"]
+            },
+            {
+                char: "老鹰",
+                pinyin: "lǎo yīng",
+                meaning: "Elang",
+                examples: [
+                    { cn: "老鹰在天空翱翔。", py: "Lǎoyīng zài tiānkōng áoxiáng.", id: "Elang sedang melayang di langit." },
+                    { cn: "老鹰是天空之王。", py: "Lǎoyīng shì tiānkōng zhī wáng.", id: "Elang adalah raja langit." }
+                ],
+                tags: ["kata benda", "hewan"]
+            },
+            {
+                char: "屋檐",
+                pinyin: "wū yán",
+                meaning: "Tepi Atap",
+                examples: [
+                    { cn: "燕子在屋檐下筑巢。", py: "Yànzi zài wū yán xià zhù cháo.", id: "Burung layang-layang membuat sarang di tepi atap." },
+                    { cn: "雨水从屋檐滴下来。", py: "Yǔshuǐ cóng wū yán dī xiàlái.", id: "Air hujan menetes dari tepi atap." }
+                ],
+                tags: ["kata benda", "bangunan"]
+            },
+            {
+                char: "怕",
+                pinyin: "pà",
+                meaning: "Takut",
+                examples: [
+                    { cn: "我怕黑。", py: "Wǒ pà hēi.", id: "Saya takut gelap." },
+                    { cn: "不要怕，有我在。", py: "Bù yào pà, yǒu wǒ zài.", id: "Jangan takut, ada aku di sini." }
+                ],
+                tags: ["verba", "emosi"]
+            },
+            {
+                char: "麻雀",
+                pinyin: "má què",
+                meaning: "Burung Gereja",
+                examples: [
+                    { cn: "麻雀虽小，五脏俱全。", py: "Máquè suī xiǎo, wǔzàng jù quán.", id: "Burung gereja kecil, tapi lengkap organ dalamnya. (Meski kecil, tapi lengkap)" },
+                    { cn: "一群麻雀在树上叫。", py: "Yī qún máquè zài shù shàng jiào.", id: "Sekawanan burung gereja berkicau di pohon." }
+                ],
+                tags: ["kata benda", "hewan"]
+            },
+            {
+                char: "泥",
+                pinyin: "ní",
+                meaning: "Lumpur",
+                examples: [
+                    { cn: "下雨天路上都是泥。", py: "Xià yǔ tiān lù shang dōu shì ní.", id: "Hari hujan jalanan penuh lumpur." },
+                    { cn: "他的鞋子上沾满了泥。", py: "Tā de xiézi shang zhān mǎn le ní.", id: "Sepatunya penuh lumpur." }
+                ],
+                tags: ["kata benda", "alam"]
+            },
+            {
+                char: "铺",
+                pinyin: "pū",
+                meaning: "Menghamparkan",
+                examples: [
+                    { cn: "请把床单铺好。", py: "Qǐng bǎ chuángdān pū hǎo.", id: "Tolong hamparkan sprei dengan rapi." },
+                    { cn: "地上铺着红地毯。", py: "Dì shang pū zhe hóng dìtǎn.", id: "Di lantai dihamparkan karpet merah." }
+                ],
+                tags: ["verba", "aksi"]
+            },
+            {
+                char: "结实",
+                pinyin: "jiē shi",
+                meaning: "Kokoh",
+                examples: [
+                    { cn: "这张桌子很结实。", py: "Zhè zhāng zhuōzi hěn jiēshi.", id: "Meja ini sangat kokoh." },
+                    { cn: "他的身体很结实。", py: "Tā de shēntǐ hěn jiēshi.", id: "Tubuhnya sangat kekar." }
+                ],
+                tags: ["adjektiva", "deskripsi"]
+            },
+            {
+                char: "蜗牛",
+                pinyin: "wō niú",
+                meaning: "Siput",
+                examples: [
+                    { cn: "蜗牛爬得很慢。", py: "Wōniú pá de hěn màn.", id: "Siput merayap sangat lambat." },
+                    { cn: "雨后出现了很多蜗牛。", py: "Yǔ hòu chūxiàn le hěn duō wōniú.", id: "Setelah hujan muncul banyak siput." }
+                ],
+                tags: ["kata benda", "hewan"]
+            },
+            {
+                char: "黄鹂鸟",
+                pinyin: "huáng lí niǎo",
+                meaning: "Yellow Bird / Burung Kepodang",
+                examples: [
+                    { cn: "黄鹂鸟的叫声很好听。", py: "Huánglíniǎo de jiàoshēng hěn hǎotīng.", id: "Suara kicauan burung kepodang sangat merdu." },
+                    { cn: "春天来了，黄鹂鸟开始唱歌。", py: "Chūntiān lái le, huánglíniǎo kāishǐ chànggē.", id: "Musim semi tiba, burung kepodang mulai berkicau." }
+                ],
+                tags: ["kata benda", "hewan"]
+            },
+            {
+                char: "茶几",
+                pinyin: "chá jī",
+                meaning: "Meja Kecil",
+                examples: [
+                    { cn: "茶几上放着一杯茶。", py: "Chájī shang fàng zhe yī bēi chá.", id: "Di meja kecil diletakkan segelas teh." },
+                    { cn: "客厅中间有一个茶几。", py: "Kètīng zhōngjiān yǒu yī gè chájī.", id: "Di tengah ruang tamu ada meja kecil." }
+                ],
+                tags: ["kata benda", "perabot"]
+            },
+            {
+                char: "手提包",
+                pinyin: "shǒu tí bāo",
+                meaning: "Tas Tangan",
+                examples: [
+                    { cn: "她买了一个新手提包。", py: "Tā mǎi le yī gè xīn shǒutíbāo.", id: "Dia membeli tas tangan baru." },
+                    { cn: "我的手提包里有钥匙。", py: "Wǒ de shǒutíbāo lǐ yǒu yàoshi.", id: "Di tas tanganku ada kunci." }
+                ],
+                tags: ["kata benda", "fashion"]
+            },
+            {
+                char: "集合",
+                pinyin: "jí hé",
+                meaning: "Berkumpul",
+                examples: [
+                    { cn: "请大家八点集合。", py: "Qǐng dàjiā bā diǎn jíhé.", id: "Tolong semua berkumpul jam delapan." },
+                    { cn: "我们在学校门口集合。", py: "Wǒmen zài xuéxiào ménkǒu jíhé.", id: "Kita berkumpul di depan gerbang sekolah." }
+                ],
+                tags: ["verba", "sosial"]
+            },
+            {
+                char: "藤",
+                pinyin: "téng",
+                meaning: "Tali Rotan",
+                examples: [
+                    { cn: "椅子上缠着藤条。", py: "Yǐzi shang chán zhe téngtiáo.", id: "Kursi dililit tali rotan." },
+                    { cn: "葡萄藤爬满了架子。", py: "Pútao téng pá mǎn le jiàzi.", id: "Pohon anggur merambat penuh di rak." }
+                ],
+                tags: ["kata benda", "tumbuhan"]
+            },
+            {
+                char: "嫩",
+                pinyin: "nèn",
+                meaning: "Lembut / Muda",
+                examples: [
+                    { cn: "这肉很嫩。", py: "Zhè ròu hěn nèn.", id: "Daging ini sangat lembut." },
+                    { cn: "嫩绿的叶子很漂亮。", py: "Nèn lǜ de yèzi hěn piàoliang.", id: "Daun muda berwarna hijau sangat cantik." }
+                ],
+                tags: ["adjektiva", "deskripsi"]
+            },
+            {
+                char: "背",
+                pinyin: "bèi",
+                meaning: "Punggung",
+                examples: [
+                    { cn: "我的背很疼。", py: "Wǒ de bèi hěn téng.", id: "Punggungku sangat sakit." },
+                    { cn: "他背上背着一个书包。", py: "Tā bèi shang bēi zhe yī gè shūbāo.", id: "Dia membawa tas di punggungnya." }
+                ],
+                tags: ["kata benda", "tubuh"]
+            },
+            {
+                char: "笨拙",
+                pinyin: "bèn zhuō",
+                meaning: "Canggung",
+                examples: [
+                    { cn: "他跳舞很笨拙。", py: "Tā tiàowǔ hěn bènzhuō.", id: "Dia menari dengan sangat canggung." },
+                    { cn: "小熊笨拙地走路。", py: "Xiǎo xióng bènzhuō de zǒulù.", id: "Beruang kecil berjalan dengan canggung." }
+                ],
+                tags: ["adjektiva", "sifat"]
+            },
+            {
+                char: "芽",
+                pinyin: "yá",
+                meaning: "Tunas",
+                examples: [
+                    { cn: "春天，树发芽了。", py: "Chūntiān, shù fā yá le.", id: "Musim semi, pohon mulai bertunas." },
+                    { cn: "豆芽很好吃。", py: "Dòuyá hěn hǎo chī.", id: "Tunas kacang sangat enak." }
+                ],
+                tags: ["kata benda", "tumbuhan"]
+            },
+            {
+                char: "壳",
+                pinyin: "ké",
+                meaning: "Cangkang",
+                examples: [
+                    { cn: "鸡蛋壳不要乱扔。", py: "Jīdàn ké bùyào luàn rēng.", id: "Jangan buang cangkang telur sembarangan." },
+                    { cn: "乌龟有一个硬壳。", py: "Wūguī yǒu yī gè yìng ké.", id: "Kura-kura punya cangkang keras." }
+                ],
+                tags: ["kata benda", "alam"]
+            },
+            {
+                char: "沿",
+                pinyin: "yán",
+                meaning: "Tepi / Mengikuti",
+                examples: [
+                    { cn: "沿着这条路走。", py: "Yán zhe zhè tiáo lù zǒu.", id: "Ikuti jalan ini terus." },
+                    { cn: "河沿种了很多树。", py: "Hé yán zhòng le hěn duō shù.", id: "Di tepi sungai ditanami banyak pohon." }
+                ],
+                tags: ["preposisi", "lokasi"]
+            },
+            {
+                char: "叽叽喳喳",
+                pinyin: "jī jī zhā zhā",
+                meaning: "Kicau Burung / Berbicara Ramai",
+                examples: [
+                    { cn: "小鸟在树上叽叽喳喳地叫。", py: "Xiǎo niǎo zài shù shang jījizhāzhā de jiào.", id: "Burung kecil berkicau ramai di pohon." },
+                    { cn: "孩子们叽叽喳喳说个不停。", py: "Háizimen jījizhāzhā shuō gè bù tíng.", id: "Anak-anak berbicara ramai tak berhenti." }
+                ],
+                tags: ["onomatope", "suara"]
+            },
+            {
+                char: "傻",
+                pinyin: "shǎ",
+                meaning: "Bodoh",
+                examples: [
+                    { cn: "别傻了，快回家吧。", py: "Bié shǎ le, kuài huí jiā ba.", id: "Jangan bodoh, cepat pulang." },
+                    { cn: "他看起来很傻，其实很聪明。", py: "Tā kàn qǐlái hěn shǎ, qíshí hěn cōngmíng.", id: "Dia kelihatan bodoh, padahal sangat pintar." }
+                ],
+                tags: ["adjektiva", "sifat"]
+            },
+            {
+                char: "成熟",
+                pinyin: "chéng shú",
+                meaning: "Matang",
+                examples: [
+                    { cn: "这个苹果成熟了。", py: "Zhège píngguǒ chéngshú le.", id: "Apel ini sudah matang." },
+                    { cn: "他是一个成熟的人。", py: "Tā shì yī gè chéngshú de rén.", id: "Dia adalah orang yang dewasa/matang." }
+                ],
+                tags: ["adjektiva", "deskripsi"]
+            },
+            {
+                char: "嘲笑",
+                pinyin: "cháo xiào",
+                meaning: "Menertawakan",
+                examples: [
+                    { cn: "不要嘲笑别人。", py: "Bù yào cháoxiào biérén.", id: "Jangan menertawakan orang lain." },
+                    { cn: "他被同学嘲笑了。", py: "Tā bèi tóngxué cháoxiào le.", id: "Dia diejek oleh teman-temannya." }
+                ],
+                tags: ["verba", "sosial"]
+            }
+        ];
+
+        // ================= STATE =================
+        let currentSection = 'dashboard';
+        let expandedCard = null;
+
+        // ================= NAVIGATION =================
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('dashboard').style.display = 'none';
+
+            if (sectionId === 'dashboard') {
+                document.getElementById('dashboard').style.display = 'flex';
+            } else {
+                document.getElementById(sectionId).classList.add('active');
+            }
+            currentSection = sectionId;
+            window.scrollTo(0, 0);
+        }
+
+        function openGame() {
+            showSection('gameSection');
+        }
+
+        function openDictionary() {
+            showSection('dictSection');
+            renderDictionary(vocabularyData);
+        }
+
+        function goBack() {
+            if (currentSection === 'gameSection') {
+                // Reload game iframe to reset state
+                const frame = document.getElementById('gameFrame');
+                frame.src = frame.src;
+            }
+            showSection('dashboard');
+        }
+
+        // ================= DICTIONARY =================
+        function renderDictionary(data) {
+            const list = document.getElementById('wordList');
+            const emptyState = document.getElementById('emptyState');
+            const totalWords = document.getElementById('totalWords');
+            const resultCount = document.getElementById('resultCount');
+
+            totalWords.textContent = vocabularyData.length;
+            resultCount.textContent = data.length;
+
+            if (data.length === 0) {
+                list.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            list.innerHTML = data.map((item, index) => `
+                <div class="word-card" data-index="${index}" style="animation-delay: ${index * 0.05}s">
+                    <div class="word-card-header" onclick="toggleCard(${index})">
+                        <div class="word-main">
+                            <div class="word-char">${item.char}</div>
+                            <div class="word-pinyin">${item.pinyin}</div>
+                            <div class="word-meaning">${item.meaning}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div class="word-number">${index + 1}</div>
+                            <div class="word-expand-icon" id="icon-${index}">▼</div>
+                        </div>
+                    </div>
+                    <div class="word-details" id="details-${index}">
+                        <div class="detail-section">
+                            <div class="detail-label">📖 Contoh Kalimat</div>
+                            ${item.examples.map(ex => `
+                                <div class="example-box">
+                                    <div class="example-chinese">${ex.cn}</div>
+                                    <div class="example-pinyin">${ex.py}</div>
+                                    <div class="example-indo">${ex.id}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-label">🏷️ Kategori</div>
+                            <div class="tag-list">
+                                ${item.tags.map(tag => `
+                                    <span class="tag ${tag === item.tags[0] ? 'highlight' : ''}">${tag}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCard(index) {
+            const card = document.querySelector(`[data-index="${index}"]`);
+            const isExpanded = card.classList.contains('expanded');
+
+            // Close all other cards
+            document.querySelectorAll('.word-card.expanded').forEach(c => {
+                if (c !== card) c.classList.remove('expanded');
+            });
+
+            if (isExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+                // Scroll card into view smoothly
+                setTimeout(() => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+
+        function handleSearch(query) {
+            const clearBtn = document.getElementById('searchClear');
+            clearBtn.classList.toggle('visible', query.length > 0);
+
+            if (!query.trim()) {
+                renderDictionary(vocabularyData);
+                return;
+            }
+
+            const lowerQuery = query.toLowerCase();
+            const filtered = vocabularyData.filter(item =>
+                item.char.includes(query) ||
+                item.pinyin.toLowerCase().includes(lowerQuery) ||
+                item.meaning.toLowerCase().includes(lowerQuery) ||
+                item.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+            );
+
+            renderDictionary(filtered);
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            handleSearch('');
+            input.focus();
+        }
+
+        // ================= INIT =================
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 800);
+        });
+
+        // Prevent zoom on double tap for mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+    </script>
+</body>
+</html>
