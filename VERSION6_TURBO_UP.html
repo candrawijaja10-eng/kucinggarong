@@ -44,7 +44,7 @@
             from { background-position: 0 0; }
             to { background-position: 0 40px; }
         }        
-        .light { position: absolute; width: 60px; height: 8px; background: linear-gradient(to bottom, #fff 0%, #ffeb3b 50%, #ff9800 100%); border-radius: 4px; top: 5%; box-shadow: 0 0 30px rgba(255,235,59,0.5); animation: flicker 3s infinite; }
+        .light { display: none !important; }
         .light:nth-child(1) { left: 12%; animation-delay: 0s; }
         .light:nth-child(2) { left: 46%; animation-delay: 1s; }
         .light:nth-child(3) { left: 80%; animation-delay: 2s; }
@@ -61,6 +61,23 @@
         .lane-label.left { left: 0; }
         .lane-label.center { left: 33.33%; }
         .lane-label.right { left: 66.66%; }
+        .lane-highlight {
+            position: absolute;
+            bottom: 0;
+            width: 33.33%;
+            height: 30%;
+            background: rgba(0, 230, 118, 0);
+            transition: background 0.3s;
+            pointer-events: none;
+            z-index: 4;
+        }
+        .lane-highlight.active {
+            background: rgba(0, 230, 118, 0.15);
+            box-shadow: inset 0 0 30px rgba(0, 230, 118, 0.2);
+        }
+        .lane-highlight.left { left: 0; }
+        .lane-highlight.center { left: 33.33%; }
+        .lane-highlight.right { left: 66.66%; }        
         #runner { position: absolute; left: 50%; bottom: 15%; width: 80px; height: 120px; z-index: 20; transform: translateX(-50%); transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .runner-body { width: 55px; height: 75px; background: linear-gradient(to bottom, #FF4757 0%, #EE5A5A 100%); border-radius: 12px 12px 8px 8px; position: relative; margin: 0 auto; box-shadow: 0 5px 20px rgba(255,71,87,0.4); }
         .runner-head { width: 40px; height: 40px; background: #FFD93D; border-radius: 50%; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
@@ -171,7 +188,7 @@
         .bullet { position: absolute; width: 10px; height: 20px; border-radius: 50%; z-index: 22; pointer-events: none; }
         .bullet-boss { background: linear-gradient(to bottom, #ff4757, #ff0000); box-shadow: 0 0 10px rgba(255,71,87,0.8); }
         .bullet-runner { background: linear-gradient(to bottom, #00E676, #00C853); box-shadow: 0 0 10px rgba(0,230,118,0.8); width: 8px; height: 16px; }
-        #shootBtn { position: absolute; bottom: 120px; right: 15px; width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%); border: 3px solid #ffd700; color: white; font-size: 28px; font-weight: bold; display: none; align-items: center; justify-content: center; z-index: 40; box-shadow: 0 4px 20px rgba(255,71,87,0.5); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+        #shootBtn { position: absolute; bottom: 110px; right: 15px; width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%); border: 3px solid #ffd700; color: white; font-size: 28px; font-weight: bold; display: none; align-items: center; justify-content: center; z-index: 40; box-shadow: 0 4px 20px rgba(255,71,87,0.5); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
         #shootBtn:active { transform: scale(0.9); box-shadow: 0 2px 10px rgba(255,71,87,0.3); }
         #shootBtn::before { content: '\1F525'; }
         #bossScreen { background: rgba(10,10,26,0.98); }
@@ -226,7 +243,7 @@
             left: 0; 
             right: 0; 
             bottom: 20px;  /* Leave room for badge below */
-            border-radius: 12px;
+            border-radius: 20px;
             border: 2px solid #00E5FF;
             background: 
                 radial-gradient(ellipse at center, rgba(0, 229, 255, 0.12) 0%, rgba(0, 229, 255, 0.04) 60%, transparent 80%),
@@ -471,6 +488,29 @@
             width: 80px;
             height: 100px;
             bottom: 20%;
+            transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.25s ease-out;
+        }
+
+        /* Car turn animations */
+        #runner.car-mode.turn-left {
+            transform: translateX(-50%) rotate(-12deg) scale(0.95);
+        }
+        #runner.car-mode.turn-right {
+            transform: translateX(-50%) rotate(12deg) scale(0.95);
+        }
+        #runner.car-mode.turn-center {
+            transform: translateX(-50%) rotate(0deg) scale(1);
+        }
+
+        /* Smooth transition for car body tilt */
+        #runner.car-mode .car-body {
+            transition: transform 0.25s ease-out;
+        }
+        #runner.car-mode.turn-left .car-body {
+            transform: rotate(-8deg);
+        }
+        #runner.car-mode.turn-right .car-body {
+            transform: rotate(8deg);
         }
 
         #runner.car-mode .runner-body {
@@ -519,7 +559,7 @@
             width: 8px;
             height: 15px;
             background: linear-gradient(to top, #ff6b35, #ffd700, transparent);
-            border-radius: 50% 50% 0 0;
+            border-radius: 0 0 50% 50%;
             opacity: 0.8;
             animation: exhaustFlicker 0.2s infinite alternate;
         }
@@ -800,9 +840,356 @@
             }
         }
 
+
+        /* ================= TRACK INDICATOR ================= */
+        #trackIndicator {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,215,0,0.3);
+            min-width: 200px;
+        }
+        #trackLabel {
+            color: #FFD700;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        #trackBar {
+            width: 180px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        #trackFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #00E676, #FFD700);
+            border-radius: 4px;
+            transition: width 0.1s linear;
+        }
+        #trackDistance {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #trackDistance span {
+            color: #FFD700;
+        }
+        .gate-marker {
+            position: absolute;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: #FF4757;
+            border-radius: 2px;
+            box-shadow: 0 0 6px rgba(255,71,87,0.6);
+        }
+        .car-marker {
+            position: absolute;
+            top: -4px;
+            width: 12px;
+            height: 16px;
+            background: #00E676;
+            border-radius: 3px;
+            box-shadow: 0 0 8px rgba(0,230,118,0.8);
+            transform: translateX(-50%);
+            transition: left 0.1s linear;
+        }
+        .car-marker::after {
+            content: '🏎️';
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+        }
+
+        /* ========== LOGIN & LEADERBOARD STYLES ========== */
+        .login-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,26,0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-screen.hidden { display: none; }
+        .login-box {
+            width: 100%; max-width: 360px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #151528 100%);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 20px;
+            padding: 30px 24px;
+            text-align: center;
+        }
+        .login-icon {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+        .login-title { font-size: 20px; font-weight: 700; color: #FFD700; margin-bottom: 6px; }
+        .login-subtitle { font-size: 12px; color: #666; margin-bottom: 24px; }
+        .login-input {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 10px;
+            color: #fff; font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .login-input:focus { border-color: #FFD700; }
+        .login-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%);
+            border: none; border-radius: 10px;
+            color: #000; font-size: 14px; font-weight: 700;
+            cursor: pointer; margin-top: 8px;
+        }
+        .guest-btn {
+            width: 100%; padding: 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #888; font-size: 13px;
+            cursor: pointer; margin-top: 12px;
+        }
+        .login-error { color: #FF4757; font-size: 12px; margin-top: 8px; display: none; }
+        .login-error.visible { display: block; }
+
+        /* Leaderboard button on car select */
+        .lb-btn-car {
+            position: absolute;
+            top: 15px; right: 15px;
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,215,0,0.05) 100%);
+            border: 2px solid rgba(255,215,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; cursor: pointer; z-index: 50;
+            transition: all 0.2s;
+        }
+        .lb-btn-car:active { transform: scale(0.92); }
+
+        /* Leaderboard modal */
+        .lb-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,26,0.95);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .lb-modal.active { display: flex; }
+        .lb-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; padding-top: 8px;
+        }
+        .lb-title { font-size: 20px; font-weight: 700; color: #FFD700; }
+        .lb-close {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: #fff; cursor: pointer;
+        }
+        .lb-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 14px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #151528 100%);
+            border: 1px solid rgba(255,215,0,0.1);
+            border-radius: 12px; margin-bottom: 8px;
+        }
+        .lb-rank {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: #888;
+        }
+        .lb-row.top-1 .lb-rank { background: linear-gradient(135deg, #FFD700, #FFA000); color: #000; }
+        .lb-row.top-2 .lb-rank { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: #000; }
+        .lb-row.top-3 .lb-rank { background: linear-gradient(135deg, #CD7F32, #B87333); color: #fff; }
+        .lb-name { flex: 1; font-size: 14px; color: #fff; }
+        .lb-score { font-size: 16px; font-weight: 700; color: #FFD700; }
+        .lb-empty { text-align: center; padding: 40px 20px; color: #666; }
+
+        /* Victory LB button */
+        .victory-lb-btn {
+            margin-top: 16px;
+            padding: 12px 28px;
+            font-size: 16px; font-weight: bold;
+            border: none; border-radius: 24px;
+            cursor: pointer;
+            background: linear-gradient(to bottom, #FFD700, #FFA000);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+        }
+    
+        /* ================= MODEL SELECTION STYLES ================= */
+        .model-select-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,26,0.98);
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .model-select-screen.active { display: flex; }
+        .model-select-title {
+            color: #FFD700;
+            font-size: 28px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        .model-select-subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .model-card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a1a3e 0%, #0f0f2e 100%);
+            border: 2px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .model-card:hover {
+            transform: translateY(-3px);
+            border-color: #FFD700;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        .model-card.selected {
+            border-color: #00E676;
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+            background: linear-gradient(135deg, #1a3e1a 0%, #0f2e0f 100%);
+        }
+        .model-card img {
+            width: 80%;
+            height: auto;
+            max-height: 60%;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+            transition: transform 0.3s;
+        }
+        .model-card:hover img {
+            transform: scale(1.1);
+        }
+        .model-card .model-name {
+            color: #FFD700;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 6px;
+            text-align: center;
+        }
+        .model-card .model-num {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            color: #666;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .model-back-btn {
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: transparent;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        .model-back-btn:hover {
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+        .model-confirm-btn {
+            padding: 14px 36px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            background: linear-gradient(to bottom, #00E676, #00C853);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,230,118,0.4);
+            transition: all 0.3s;
+        }
+        .model-confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,230,118,0.6);
+        }
+
     </style>
 </head>
 <body>
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-icon">📚</div>
+            <div class="login-title">学生词</div>
+            <div class="login-subtitle">Masuk untuk menyimpan skor!</div>
+            <input type="text" class="login-input" id="loginName" placeholder="Nama pemain..." maxlength="20">
+            <input type="password" class="login-input" id="loginPass" placeholder="Password (min 4)..." maxlength="20">
+            <button class="login-btn" onclick="handleLogin()">MASUK / DAFTAR</button>
+            <div class="login-error" id="loginError"></div>
+            <button class="guest-btn" onclick="playAsGuest()">Main sebagai Tamu</button>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div class="lb-modal" id="lbModal">
+        <div class="lb-header">
+            <div class="lb-title">🏆 Leaderboard</div>
+            <div class="lb-close" onclick="closeLB()">✕</div>
+        </div>
+        <div id="lbContent">
+            <div class="lb-empty">Memuat...</div>
+        </div>
+    </div>
+
     <div id="gameContainer">
         <div class="light"></div>
         <div class="light"></div>
@@ -846,19 +1233,19 @@
         <!-- TURBO INDICATOR (Sports Car) -->
         <div id="turboIndicator">
             <span>🔥</span>
-            <span class="turbo-text">TURBO ACTIVE!</span>
+            <span class="turbo-text"> </span>
             <span class="turbo-hint">(2x Speed)</span>
         </div>
 
         <!-- SHIELD ARMOR INDICATOR (Truck) -->
         <div id="shieldArmorIndicator">
             <span>🛡️</span>
-            <span class="shield-text">ARMOR ACTIVE!</span>
+            <span class="shield-text"> </span>
         </div>
 
         <!-- TRUCK SLOW BADGE -->
         <div class="truck-slow-badge" id="truckSlowBadge">
-            🐢 SLOW MODE
+            🐢
         </div>
 
         <div id="runner" class="car-mode">
@@ -889,6 +1276,7 @@
         </div>
         <!-- CAR SELECTION SCREEN -->
         <div class="screen" id="carSelectScreen">
+            <div class="lb-btn-car" onclick="openLB()" title="Leaderboard">🏆</div>
             <h1>PILIH MOBIL</h1>
             <p style="color: #FFD700; font-size: 18px; margin-bottom: 20px;">挑选你的汽车！</p>
             
@@ -899,8 +1287,7 @@
                     <div class="car-stats">
                         <span>⚡ Speed</span>
                         <div class="stat-bar"><div style="width:90%"></div></div>
-                        <span style="color:#FF4757; margin-top:6px;">🔥 TURBO: 2x Speed + 1.5x Score</span>
-                        <span style="color:#FFD700; font-size:10px;">Press ↑ to activate</span>
+                        <span style="color:#FF4757; margin-top:6px;">🔥 TURBO: 2x Speed </span>
                     </div>
                 </div>
                 
@@ -910,8 +1297,7 @@
                     <div class="car-stats">
                         <span>⚡ Speed</span>
                         <div class="stat-bar"><div style="width:70%"></div></div>
-                        <span style="color:#3498db; margin-top:6px;">⏱️ SLOW MO: Collect ⏱️ items</span>
-                        <span style="color:#FFD700; font-size:10px;">Standard gameplay</span>
+                        <span style="color:#FFD700; font-size:13px;">Standard gameplay</span>
                     </div>
                 </div>
                 
@@ -922,15 +1308,40 @@
                         <span>🛡️ Armor</span>
                         <div class="stat-bar"><div style="width:95%"></div></div>
                         <span style="color:#00E5FF; margin-top:6px;">🛡️ ARMOR: 1 Extra Life</span>
-                        <span style="color:#f39c12; font-size:10px;">🐢 Slower: 5.3s per level</span>
                     </div>
                 </div>
             </div>
             
             <button class="btn btn-start" onclick="confirmCarSelection()" style="margin-top: 25px;">
-                PILIH & MULAI
+                PILIH MODEL →
             </button>
         </div>
+        
+        <!-- MODEL SELECTION SCREENS -->
+        <div class="model-select-screen" id="modelSelectSports">
+            <div class="model-select-title">🏎️ PILIH MODEL SPORTS</div>
+            <div class="model-select-subtitle">Pilih salah satu dari 9 model sports car</div>
+            <div class="model-grid" id="sportsModelGrid"></div>
+            <button class="model-back-btn" onclick="backToCarSelect()">← Kembali</button>
+            <button class="model-confirm-btn" onclick="confirmModelSelection()">PILIH & MULAI</button>
+        </div>
+
+        <div class="model-select-screen" id="modelSelectClassic">
+            <div class="model-select-title">🚗 PILIH MODEL CLASSIC</div>
+            <div class="model-select-subtitle">Pilih salah satu dari 3 model classic car</div>
+            <div class="model-grid" id="classicModelGrid"></div>
+            <button class="model-back-btn" onclick="backToCarSelect()">← Kembali</button>
+            <button class="model-confirm-btn" onclick="confirmModelSelection()">PILIH & MULAI</button>
+        </div>
+
+        <div class="model-select-screen" id="modelSelectTruck">
+            <div class="model-select-title">🚚 PILIH MODEL TRUCK</div>
+            <div class="model-select-subtitle">Pilih salah satu dari 3 model truck</div>
+            <div class="model-grid" id="truckModelGrid"></div>
+            <button class="model-back-btn" onclick="backToCarSelect()">← Kembali</button>
+            <button class="model-confirm-btn" onclick="confirmModelSelection()">PILIH & MULAI</button>
+        </div>
+
         <!-- SCREENS -->
         <div class="screen hidden" id="startScreen">
             <h1>🏃 地铁跑酷</h1>
@@ -940,7 +1351,7 @@
                 <p>🚪 <b>Pilih pintu</b> dengan arti Bahasa Indonesia yang benar</p>
                 <p>❌ <b>Salah = Game Over!</b></p>
             </div>
-            <p style="margin-top: 10px; color: #888;">32 Level | Timer aktif | Bonus cepat!</p>
+            <p style="margin-top: 10px; color: #888;">32 Level | Bonus cepat!</p>
             <div class="swipe-hint">
                 <span class="key-hint">←</span> Kiri 
                 <span class="key-hint">↓</span> Slow Mo 
@@ -952,7 +1363,7 @@
 
         <div class="screen hidden" id="gameOverScreen">
             <h2>💥 GAME OVER!</h2>
-            <p>Kamu memilih pintu yang salah!</p>
+            <p>Kamu memilih jawaban yang salah!</p>
             <p>Jawaban benar: <span id="correctAnswer" style="color: #FFD700; font-size: 22px;"></span></p>
             <p style="margin-top: 15px;">Score Akhir: <span id="finalScore" style="color: #FFD700; font-size: 32px;">0</span></p>
             <p>Level dilewati: <span id="passedLevels" style="color: #00E676;">0</span> / 32</p>
@@ -1017,7 +1428,8 @@
             <p style="margin-top: 15px; color: #888;">Score Akhir</p>
             <p style="font-size: 56px; color: #FFD700; margin: 5px 0;"><span id="bossVictoryScore">0</span></p>
             <p style="color: #FFD700; font-size: 20px;">🏆 Kamu adalah legenda!</p>
-            <button class="btn btn-start" onclick="showCarSelection()" style="margin-top: 20px;">MAIN LAGI</button>
+            <button class="victory-lb-btn" onclick="saveAndOpenLB()">🏆 Lihat Leaderboard</button>
+            <button class="btn btn-start" onclick="showCarSelection()" style="margin-top: 12px;">MAIN LAGI</button>
         </div>
     </div>
 
@@ -1142,6 +1554,7 @@
         let currentLevel = 0;
         let score = 0;
         let shuffledData = [];
+        let selectedModel = null; // Selected model index for current car type
         let timer = null;
         let timeLeft = 100;
         const TIME_PER_LEVEL = 5;
@@ -1203,9 +1616,20 @@
                 ability: 'turbo',
                 baseDoorSpeed: 3,
                 baseTime: 5,
-                turboMultiplier: 2.0,      // 2x speed during turbo
-                turboDuration: 1000,          // 4 seconds
-                turboCooldown: false
+                turboMultiplier: 2.0,
+                turboDuration: 1000,
+                turboCooldown: false,
+                models: [
+                    { id: 1, name: 'Sports 1', image: '1.png' },
+                    { id: 2, name: 'Sports 2', image: '2.png' },
+                    { id: 3, name: 'Sports 3', image: '3.png' },
+                    { id: 4, name: 'Sports 4', image: '4.png' },
+                    { id: 5, name: 'Sports 5', image: '5.png' },
+                    { id: 6, name: 'Sports 6', image: '6.png' },
+                    { id: 7, name: 'Sports 7', image: '7.png' },
+                    { id: 8, name: 'Sports 8', image: '8.png' },
+                    { id: 9, name: 'Sports 9', image: '9.png' }
+                ]
             },
             classic: { 
                 primary: '#3498db', 
@@ -1214,7 +1638,12 @@
                 image: 'car_classic.png',
                 ability: 'none',
                 baseDoorSpeed: 3,
-                baseTime: 5
+                baseTime: 5,
+                models: [
+                    { id: 10, name: 'Classic 1', image: '10.png' },
+                    { id: 11, name: 'Classic 2', image: '11.png' },
+                    { id: 12, name: 'Classic 3', image: '12.png' }
+                ]
             },
             truck: { 
                 primary: '#f39c12', 
@@ -1226,7 +1655,12 @@
                 baseTime: 5.4,
                 hasArmor: true,
                 armorActive: false,
-                armorRegenInterval: 5 // Regain shield every 5 levels
+                armorRegenInterval: 5,
+                models: [
+                    { id: 13, name: 'Truck 1', image: '13.png' },
+                    { id: 14, name: 'Truck 2', image: '14.png' },
+                    { id: 15, name: 'Truck 3', image: '15.png' }
+                ]
             }
         };
 
@@ -1395,12 +1829,37 @@
             runner.style.left = lanePositions[runnerLane] + '%';
         }
 
+        function applyCarTurnAnimation(direction) {
+            const runner = document.getElementById('runner');
+            if (!runner.classList.contains('car-mode')) return;
+
+            // Remove existing turn classes
+            runner.classList.remove('turn-left', 'turn-right', 'turn-center');
+
+            // Force reflow to restart animation
+            void runner.offsetWidth;
+
+            // Apply turn class based on direction
+            if (direction === 'left') {
+                runner.classList.add('turn-left');
+            } else if (direction === 'right') {
+                runner.classList.add('turn-right');
+            }
+
+            // Return to center after animation completes
+            setTimeout(() => {
+                runner.classList.remove('turn-left', 'turn-right');
+                runner.classList.add('turn-center');
+            }, 250);
+        }
+
         function moveLeft() {
             if (!isGameActive && !bossFightActive) return;
             if (runnerLane > 0) {
                 runnerLane--;
                 updateRunnerPosition();
                 updateLaneHighlight();
+                applyCarTurnAnimation('left');
             }
         }
 
@@ -1410,12 +1869,13 @@
                 runnerLane++;
                 updateRunnerPosition();
                 updateLaneHighlight();
+                applyCarTurnAnimation('right');
             }
         }
 
         function loadLevel() {
             resetLevelSpeed();
-            
+
             if (currentLevel >= shuffledData.length) {
                 showFinish();
                 return;
@@ -1429,10 +1889,39 @@
 
             startTimer();
 
-            spawnNextDoors();
+            // Dynamic gate spacing: travel time before gates appear
+            // Base travel time + random variation based on level progression
+            const baseTravelTime = 800; // minimum travel time in ms
+            const levelTravelBonus = Math.min(currentLevel * 80, 1200); // increases with level, max 1200ms
+            const randomVariation = Math.random() * 600; // 0-600ms random
+            const travelTime = baseTravelTime + levelTravelBonus + randomVariation;
+            const containerHeight = document.getElementById('gameContainer').clientHeight;
+            const runnerBottomPx = containerHeight * 0.15;
+            const runnerTopPx = containerHeight - runnerBottomPx - 120;
+            const runnerY = runnerTopPx + 120;
+            const spawnY = -250;
+            const distanceToTravel = runnerY - spawnY;
+            const travelTimeSec = (distanceToTravel / doorSpeed) * (1000 / 60) / 1000;
 
+            // Set timer to match gate travel time + small buffer for reading
+            const readBuffer = 1.5; // seconds to read gates after they arrive
+            maxTime = travelTimeSec + readBuffer;
+
+            // Clear any existing gates first
+            doors.forEach(d => {
+                if (d.element && d.element.parentNode) d.element.remove();
+            });
+            doors = [];
+
+            // Spawn gates after travel time
+            setTimeout(() => {
+                if (!isGameActive) return;
+                spawnNextDoors();
+            }, travelTime);
+
+            // Skill items also spawn after travel time + offset
             if (Math.random() < 0.3) {
-                skillSpawnTimeout = setTimeout(() => spawnSkillItem(), 1500);
+                skillSpawnTimeout = setTimeout(() => spawnSkillItem(), travelTime + 800);
             }
 
             startDoorMovement();
@@ -1447,7 +1936,7 @@
             const gate = document.createElement('div');
             gate.className = 'gate-item';
             gate.style.left = (laneIndex * 33.33) + '%';
-            gate.style.top = '-70px';
+            gate.style.top = '-250px';
             gate.dataset.lane = laneIndex;
             gate.dataset.meaning = meaning;
             gate.dataset.label = label;
@@ -1475,7 +1964,7 @@
                 element: gate,
                 lane: laneIndex,
                 meaning: meaning,
-                y: -70,
+                y: -250,
                 passed: false
             });
         }
@@ -1550,7 +2039,7 @@
                         door.y += doorSpeed;
                         door.element.style.top = door.y + 'px';
 
-                        if (!door.passed && !door.checked && !door.answered && door.y > runnerBottomRelative - 60 && door.y < runnerBottomRelative + 20) {
+                        if (!door.passed && !door.checked && !door.answered && door.y > runnerBottomRelative - 80 && door.y < runnerBottomRelative + 30) {
                             if (door.lane === runnerLane) {
                                 door.checked = true;
                                 door.answered = true;
@@ -1616,6 +2105,8 @@
             animationId = requestAnimationFrame(animate);
         }
 
+        
+
         function resetSkillAndSpeed() {
             // doorSpeed set by car config above
             if (skillActive) {
@@ -1658,22 +2149,26 @@
                 runner.classList.add('celebrate');
                 updateScore();
 
-                // Mark all gates to keep scrolling to bottom
-                doors.forEach(d => {
-                    d.answered = true;  // prevent re-checking
-                    d.checked = true;
-                });
+                // Don't mark gates as answered — let them scroll naturally
+                // Just prevent re-checking on the answered gate
+                doorObj.checked = true;
+                doorObj.answered = true;
 
-                setTimeout(() => {
-                    if (skillSpawnTimeout) {
-                        clearTimeout(skillSpawnTimeout);
-                        skillSpawnTimeout = null;
+                // Wait for all gates to scroll off-screen before loading next level
+                const checkAllGone = setInterval(() => {
+                    const allGone = doors.every(d => d.y > document.getElementById('gameContainer').clientHeight + 500);
+                    if (allGone) {
+                        clearInterval(checkAllGone);
+                        if (skillSpawnTimeout) {
+                            clearTimeout(skillSpawnTimeout);
+                            skillSpawnTimeout = null;
+                        }
+                        runner.classList.remove('celebrate');
+                        currentLevel++;
+                        isGameActive = true;
+                        loadLevel();
                     }
-                    runner.classList.remove('celebrate');
-                    currentLevel++;
-                    isGameActive = true;
-                    loadLevel();
-                }, 1200);
+                }, 100);
 
             } else {
                 // Truck Armor: absorb first hit
@@ -1714,23 +2209,19 @@
                         runner.classList.remove('shake');
                     }, 400);
 
-                    // Continue game (don't lose heart)
+                    // Continue game (don't lose heart) — let gates scroll off naturally
                     setTimeout(() => {
-                        doors.forEach(d => {
-                            d.element.style.transition = 'all 0.5s';
-                            d.element.style.opacity = '0';
-                        });
-                        setTimeout(() => {
-                            doors.forEach(d => {
-                                if (d.element && d.element.parentNode) d.element.remove();
-                            });
-                            doors = [];
-                            if (skillSpawnTimeout) { clearTimeout(skillSpawnTimeout); skillSpawnTimeout = null; }
-                            currentLevel++;
-                            isGameActive = true;
-                            loadLevel();
-                        }, 500);
-                    }, 800);
+                        const checkAllGone = setInterval(() => {
+                            const allGone = doors.every(d => d.y > document.getElementById('gameContainer').clientHeight + 500);
+                            if (allGone) {
+                                clearInterval(checkAllGone);
+                                if (skillSpawnTimeout) { clearTimeout(skillSpawnTimeout); skillSpawnTimeout = null; }
+                                currentLevel++;
+                                isGameActive = true;
+                                loadLevel();
+                            }
+                        }, 100);
+                    }, 500);
                     return;
                 }
 
@@ -1749,30 +2240,23 @@
                 doorObj.element.classList.add('gate-break');
 
                 if (hearts > 0) {
+                    // Let gates scroll off naturally instead of fading
                     setTimeout(() => {
-                        doors.forEach(d => {
-                            d.element.style.transition = 'all 0.5s';
-                            d.element.style.opacity = '0';
-                        });
-
-                        setTimeout(() => {
-                            doors.forEach(d => {
-                                if (d.element && d.element.parentNode) {
-                                    d.element.remove();
+                        const checkAllGone = setInterval(() => {
+                            const allGone = doors.every(d => d.y > document.getElementById('gameContainer').clientHeight + 500);
+                            if (allGone) {
+                                clearInterval(checkAllGone);
+                                if (skillSpawnTimeout) {
+                                    clearTimeout(skillSpawnTimeout);
+                                    skillSpawnTimeout = null;
                                 }
-                            });
-                            doors = [];
-
-                            if (skillSpawnTimeout) {
-                                clearTimeout(skillSpawnTimeout);
-                                skillSpawnTimeout = null;
+                                runner.classList.remove('shake');
+                                currentLevel++;
+                                isGameActive = true;
+                                loadLevel();
                             }
-                            runner.classList.remove('shake');
-                            currentLevel++;
-                            isGameActive = true;
-                            loadLevel();
-                        }, 500);
-                    }, 800);
+                        }, 100);
+                    }, 500);
                 } else {
                     setTimeout(() => {
                         gameOver(current.meaning);
@@ -1788,29 +2272,25 @@
             maxTime = carConfig.baseTime || TIME_PER_LEVEL;
             updateTimerBar();
 
+            // Timer now only tracks time for score calculation, no longer causes game over
             timer = setInterval(() => {
                 timeLeft -= 100 / (maxTime * 10);
                 updateTimerBar();
-
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    cancelAnimationFrame(animationId);
-                    isGameActive = false;
-                    gameOver("Waktu habis!");
-                }
+                // Time out no longer causes game over - player can take their time
             }, 100);
         }
 
         function updateTimerBar() {
             const fill = document.getElementById('timerFill');
             fill.style.width = timeLeft + '%';
-
-            if (timeLeft < 25) {
-                fill.style.background = '#FF4757';
-            } else if (timeLeft < 50) {
-                fill.style.background = '#FFD700';
-            } else {
+            
+            // Color shifts from blue (far) → yellow (close) → red (arrived)
+            if (timeLeft > 60) {
+                fill.style.background = 'linear-gradient(to right, #3498db, #00E676)';
+            } else if (timeLeft > 30) {
                 fill.style.background = 'linear-gradient(to right, #00E676, #FFD700)';
+            } else {
+                fill.style.background = 'linear-gradient(to right, #FFD700, #FF4757)';
             }
         }
 
@@ -2066,6 +2546,16 @@
             document.getElementById('skillActive').style.display = 'none';
             document.getElementById('gameContainer').style.filter = 'none';
 
+            // Hide mobile slow-mo button and turbo button during boss fight
+            document.getElementById('btnSlowMo').style.display = 'none';
+            document.getElementById('btnTurbo').style.display = 'none';
+            document.getElementById('slowMoBadge').style.display = 'none';
+
+            // Hide truck shield effect during boss fight
+            document.getElementById('truckShieldEffect').style.display = 'none';
+            document.getElementById('shieldArmorIndicator').style.display = 'none';
+            document.getElementById('truckSlowBadge').style.display = 'none';
+
             bossFightActive = true;
             bossHP = BOSS_MAX_HP;
             bossX = 50;
@@ -2195,7 +2685,7 @@
                 }
 
                 // Skip bullet movement during shield phase
-                {
+                if (!shieldPhaseActive) {
                     const runnerBottomPx = containerHeight * 0.15;
                     const runnerTopPx = containerHeight - runnerBottomPx - 120;
                     const runnerLeftPx = (lanePositions[runnerLane] / 100) * containerWidth;
@@ -2674,6 +3164,14 @@
             clearInterval(bossShootInterval);
             clearInterval(shieldPhaseTimer);
 
+            // Restore mobile controls visibility after boss fight
+            document.getElementById('btnSlowMo').style.display = '';
+            document.getElementById('slowMoBadge').style.display = skillCount > 0 ? 'flex' : 'none';
+            const carConfig = CAR_CONFIG[selectedCarType];
+            if (carConfig.ability === 'turbo') {
+                document.getElementById('btnTurbo').style.display = 'flex';
+            }
+
             const tank = document.getElementById('bossTank');
             const tankRect = tank.getBoundingClientRect();
             const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
@@ -2725,6 +3223,14 @@
             clearInterval(bossMoveInterval);
             clearInterval(bossShootInterval);
             clearInterval(shieldPhaseTimer);
+
+            // Restore mobile controls visibility after boss fight
+            document.getElementById('btnSlowMo').style.display = '';
+            document.getElementById('slowMoBadge').style.display = skillCount > 0 ? 'flex' : 'none';
+            const carConfig = CAR_CONFIG[selectedCarType];
+            if (carConfig.ability === 'turbo') {
+                document.getElementById('btnTurbo').style.display = 'flex';
+            }
 
             document.getElementById('bossTank').style.display = 'none';
             document.getElementById('bossHealthBar').style.display = 'none';
@@ -2942,7 +3448,7 @@
             defeatScreen.style.zIndex = '200';
             defeatScreen.innerHTML = `
                 <h2 style="color: #FF4757; font-size: 36px; margin-bottom: 15px; text-shadow: 0 0 20px rgba(255,71,87,0.5);">
-                    💥 你输了!
+                    💥  你输了!
                 </h2>
                 <p style="color: #FFD700; font-size: 28px; margin: 15px 0; text-shadow: 0 0 15px rgba(255,215,0,0.4);">
                     Tank terlalu kuat
@@ -2978,42 +3484,130 @@
         function selectCar(card) {
             // Remove selected class from all cards
             document.querySelectorAll('.car-card').forEach(c => c.classList.remove('selected'));
-            
+
             // Add to clicked card
             card.classList.add('selected');
-            
+
             // Save selection
             selectedCarType = card.dataset.car;
-            
-            // Update preview color
-            updateCarColor();
+
+            // Show model selection screen for this car type
+            showModelSelection(selectedCarType);
         }
 
         function updateCarColor() {
-            const colors = CAR_CONFIG[selectedCarType];
-            
-            // Update image source
+            const config = CAR_CONFIG[selectedCarType];
+
+            // Update image source - use selected model if available
             const carImage = document.getElementById('carImage');
             if (carImage) {
-                carImage.src = colors.image;
+                if (selectedModel !== null && config.models && config.models[selectedModel]) {
+                    carImage.src = config.models[selectedModel].image;
+                } else {
+                    carImage.src = config.image;
+                }
             }
-            
+
             // Keep CSS colors as fallback / for exhaust effects
             const chassis = document.querySelector('.car-chassis');
             if (chassis) {
-                chassis.style.setProperty('--car-color-primary', colors.primary);
-                chassis.style.setProperty('--car-color-secondary', colors.secondary);
+                chassis.style.setProperty('--car-color-primary', config.primary);
+                chassis.style.setProperty('--car-color-secondary', config.secondary);
             }
         }
 
-        function confirmCarSelection() {
-            // Apply selected car color first
+        function showModelSelection(carType) {
+            // Hide car selection screen
+            document.getElementById('carSelectScreen').classList.add('hidden');
+
+            // Show appropriate model selection screen
+            const screenId = 'modelSelect' + carType.charAt(0).toUpperCase() + carType.slice(1);
+            const screen = document.getElementById(screenId);
+            screen.classList.add('active');
+
+            // Generate model grid
+            generateModelGrid(carType);
+
+            // Select first model by default
+            selectedModel = 0;
+            updateModelSelectionUI(carType);
+        }
+
+        function generateModelGrid(carType) {
+            const config = CAR_CONFIG[carType];
+            const gridId = carType + 'ModelGrid';
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            config.models.forEach((model, index) => {
+                const card = document.createElement('div');
+                card.className = 'model-card' + (index === 0 ? ' selected' : '');
+                card.dataset.index = index;
+                card.dataset.image = model.image;
+                card.onclick = () => selectModel(index, carType);
+
+                card.innerHTML = `
+                    <span class="model-num">#${model.id}</span>
+                    <img src="${model.image}" alt="${model.name}" onerror="this.src='${config.image}'">
+                    <div class="model-name">${model.name}</div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function selectModel(index, carType) {
+            selectedModel = index;
+            updateModelSelectionUI(carType);
+        }
+
+        function updateModelSelectionUI(carType) {
+            const gridId = carType + 'ModelGrid';
+            const cards = document.querySelectorAll('#' + gridId + ' .model-card');
+            cards.forEach((card, idx) => {
+                if (idx === selectedModel) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        }
+
+        function backToCarSelect() {
+            // Hide all model selection screens
+            document.querySelectorAll('.model-select-screen').forEach(s => s.classList.remove('active'));
+
+            // Show car selection screen
+            document.getElementById('carSelectScreen').classList.remove('hidden');
+
+            selectedModel = null;
+        }
+
+        function confirmModelSelection() {
+            // Hide all model selection screens
+            document.querySelectorAll('.model-select-screen').forEach(s => s.classList.remove('active'));
+
+            // Apply selected model image
             updateCarColor();
-            
+
+            // Start the game
+            startGame();
+        }
+
+        function confirmCarSelection() {
+            // If no model selected yet, show model selection for current car type
+            if (selectedModel === null) {
+                showModelSelection(selectedCarType);
+                return;
+            }
+
+            // Apply selected car color and model
+            updateCarColor();
+
             // Hide car select screen
             document.getElementById('carSelectScreen').classList.add('hidden');
-            
-            // DIRECTLY START THE GAME (not just show start screen!)
+
+            // DIRECTLY START THE GAME
             startGame();
         }
 
@@ -3024,6 +3618,12 @@
             document.getElementById('finishScreen').classList.add('hidden');
             document.getElementById('bossScreen').classList.add('hidden');
             document.getElementById('bossVictoryScreen').classList.add('hidden');
+
+            // Hide all model selection screens
+            document.querySelectorAll('.model-select-screen').forEach(s => s.classList.remove('active'));
+
+            // Reset model selection
+            selectedModel = null;
         }
         
         function carExplosionEffect() {
@@ -3237,6 +3837,161 @@
         }                        
         // Initialize
         initSpeedLines();
+    </script>
+
+    <!-- LOGIN & LEADERBOARD SCRIPT -->
+    <script>
+        // ================= CONFIG =================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwzObuRfk6Yo_wMX7gAW-mFC9JX-Xe750DSm4N2SQBD8R1zreHxosiXhuXxIawploB0Lg/exec';
+        const GAS_READY = !GAS_URL.includes('AKfycbz...');
+        let currentUser = null;
+
+        // ================= AUTH =================
+        function initAuth() {
+            const saved = localStorage.getItem('xueshengci_user');
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    hideLogin();
+                } catch(e) { localStorage.removeItem('xueshengci_user'); }
+            }
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const err = document.getElementById('loginError');
+
+            if (!name || name.length < 2) { err.textContent = 'Nama minimal 2 karakter!'; err.classList.add('visible'); return; }
+            if (!pass || pass.length < 4) { err.textContent = 'Password minimal 4 karakter!'; err.classList.add('visible'); return; }
+
+            err.classList.remove('visible');
+            currentUser = { name: name, pass: pass };
+            localStorage.setItem('xueshengci_user', JSON.stringify(currentUser));
+            hideLogin();
+        }
+
+        function playAsGuest() {
+            currentUser = { name: 'Guest', isGuest: true };
+            hideLogin();
+        }
+
+        function hideLogin() {
+            document.getElementById('loginScreen').classList.add('hidden');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('xueshengci_user');
+            location.reload();
+        }
+
+        // ================= LEADERBOARD =================
+        function openLB() {
+            document.getElementById('lbModal').classList.add('active');
+            loadLB();
+        }
+        function closeLB() {
+            document.getElementById('lbModal').classList.remove('active');
+        }
+
+        async function loadLB() {
+            const content = document.getElementById('lbContent');
+            content.innerHTML = '<div class="lb-empty">Memuat...</div>';
+
+            let scores = [];
+
+            // Try GAS
+            if (GAS_READY) {
+                try {
+                    const res = await fetch(GAS_URL + '?action=getScores', { redirect: 'follow' });
+                    const data = await res.json();
+                    if (data.scores) scores = data.scores;
+                } catch(e) { console.log('GAS error:', e); }
+            }
+
+            // Fallback localStorage
+            if (scores.length === 0) {
+                const local = JSON.parse(localStorage.getItem('xueshengci_scores') || '[]');
+                scores = local.map(s => [s.name, s.score, s.date]);
+            }
+
+            if (scores.length === 0) {
+                content.innerHTML = '<div class="lb-empty">Belum ada data pemain</div>';
+                return;
+            }
+
+            scores.sort((a, b) => b[1] - a[1]);
+            content.innerHTML = scores.map((row, i) => {
+                const rank = i + 1;
+                const rankClass = rank <= 3 ? `top-${rank}` : '';
+                const icon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+                return `<div class="lb-row ${rankClass}">
+                    <div class="lb-rank">${icon}</div>
+                    <div class="lb-name">${row[0]}</div>
+                    <div class="lb-score">${row[1].toLocaleString()}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ================= SAVE SCORE =================
+        async function saveScoreToSheet(name, score) {
+            if (!name || name === 'Guest') return { success: false };
+
+            const payload = {
+                action: 'saveScore',
+                name: String(name).trim(),
+                score: parseInt(score),
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            // Save local backup
+            const scores = JSON.parse(localStorage.getItem('xueshengci_scores') || '[]');
+            const existing = scores.find(s => s.name === name);
+            if (existing) { if (score > existing.score) existing.score = score; }
+            else scores.push({ name, score, date: payload.date });
+            localStorage.setItem('xueshengci_scores', JSON.stringify(scores));
+
+            // Try GAS
+            if (GAS_READY) {
+                try {
+                    await fetch(GAS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch(e) {}
+            }
+            return { success: true };
+        }
+
+        function saveAndOpenLB() {
+            if (currentUser && !currentUser.isGuest) {
+                saveScoreToSheet(currentUser.name, score);
+            }
+            openLB();
+        }
+
+        // Override bossDefeated to auto-save
+        const _originalBossDefeated = bossDefeated;
+        bossDefeated = function() {
+            _originalBossDefeated();
+            if (currentUser && !currentUser.isGuest) {
+                saveScoreToSheet(currentUser.name, score);
+            }
+        };
+
+        // ================= INIT =================
+        initAuth();
+
+        // Enter key support
+        document.getElementById('loginName').addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('loginPass').focus();
+        });
+        document.getElementById('loginPass').addEventListener('keypress', e => {
+            if (e.key === 'Enter') handleLogin();
+        });
     </script>
 </body>
 </html>
