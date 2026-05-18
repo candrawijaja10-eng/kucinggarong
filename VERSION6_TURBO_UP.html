@@ -1165,6 +1165,9 @@
     </style>
 </head>
 <body>
+    <!-- BACKGROUND MUSIC -->
+    <audio id="bgMusic" src="Soundtrack.mp3" loop preload="auto"></audio>
+
     <!-- LOGIN SCREEN -->
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
@@ -1207,7 +1210,10 @@
         <div id="speedLines"></div>
 
         <div id="ui">
-            <div class="ui-box">Level: <span id="level">1</span>/<span id="total">32</span></div>
+            <div class="ui-box">Level: <span id="level">1</span>/<span id="total">32</span>
+            <div class="ui-box" id="musicToggle" onclick="toggleMusicUI()" style="cursor: pointer; padding: 6px 12px; font-size: 18px;">
+                <span id="musicIcon">🔊</span>
+            </div></div>
             <div class="ui-box">Score: <span id="score">0</span></div>
         </div>
 
@@ -1707,6 +1713,8 @@
         }
 
         function startGame() {
+            initMusic();
+            playMusic();
             currentLevel = 0;
             score = 0;
             runnerLane = 1;
@@ -2306,6 +2314,7 @@
         }
 
         function gameOver(correctAnswer) {
+            pauseMusic();
             const runner = document.getElementById('runner');
             carExplosionEffect();
             runner.classList.add('fall');
@@ -2319,6 +2328,7 @@
         }
 
         function showFinish() {
+            pauseMusic();
             cancelAnimationFrame(animationId);
             clearInterval(timer);
             isGameActive = false;
@@ -3158,6 +3168,7 @@
 
         function bossDefeated() {
             bossFightActive = false;
+            pauseMusic();
             shieldPhaseActive = false;
 
             clearInterval(bossMoveInterval);
@@ -3258,6 +3269,7 @@
             }
 
             if (!victory) {
+                    pauseMusic();
                 const runner = document.getElementById('runner');
                 runner.classList.add('fall');
 
@@ -3612,6 +3624,7 @@
         }
 
         function showCarSelection() {
+            pauseMusic();
             document.getElementById('carSelectScreen').classList.remove('hidden');
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
@@ -3835,7 +3848,73 @@
                 trailContainer.innerHTML = '';
             }
         }                        
-        // Initialize
+        
+
+        
+        function toggleMusicUI() {
+            const isEnabled = toggleMusic();
+            document.getElementById('musicIcon').textContent = isEnabled ? '🔊' : '🔇';
+        }
+
+// ================= BACKGROUND MUSIC FUNCTIONS =================
+        const bgMusic = document.getElementById('bgMusic');
+        let musicEnabled = true;
+        let musicInitialized = false;
+
+        function initMusic() {
+            if (musicInitialized) return;
+            musicInitialized = true;
+
+            // Set volume to comfortable level (50%)
+            bgMusic.volume = 0.5;
+
+            // Handle autoplay policy - try to play, but don't fail if blocked
+            const playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.log('Autoplay blocked, music will start on first interaction');
+                    // Add one-time click listener to start music on first interaction
+                    const startMusicOnInteraction = () => {
+                        if (musicEnabled && bgMusic.paused) {
+                            bgMusic.play().catch(e => console.log('Music play failed:', e));
+                        }
+                        document.removeEventListener('click', startMusicOnInteraction);
+                        document.removeEventListener('touchstart', startMusicOnInteraction);
+                        document.removeEventListener('keydown', startMusicOnInteraction);
+                    };
+                    document.addEventListener('click', startMusicOnInteraction, { once: true });
+                    document.addEventListener('touchstart', startMusicOnInteraction, { once: true });
+                    document.addEventListener('keydown', startMusicOnInteraction, { once: true });
+                });
+            }
+        }
+
+        function playMusic() {
+            if (!musicEnabled || !bgMusic) return;
+            bgMusic.currentTime = 0; // Restart from beginning
+            bgMusic.play().catch(err => console.log('Music play failed:', err));
+        }
+
+        function pauseMusic() {
+            if (!bgMusic) return;
+            bgMusic.pause();
+        }
+
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                playMusic();
+            } else {
+                pauseMusic();
+            }
+            return musicEnabled;
+        }
+
+        function setMusicVolume(vol) {
+            if (bgMusic) bgMusic.volume = Math.max(0, Math.min(1, vol));
+        }
+
+// Initialize
         initSpeedLines();
     </script>
 
