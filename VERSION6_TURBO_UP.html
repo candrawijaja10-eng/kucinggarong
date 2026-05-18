@@ -1186,7 +1186,10 @@
     <div class="lb-modal" id="lbModal">
         <div class="lb-header">
             <div class="lb-title">🏆 Leaderboard</div>
-            <div class="lb-close" onclick="closeLB()">✕</div>
+            <div style="display:flex;gap:8px;">
+                <div class="lb-close" onclick="refreshLB()" title="Refresh">🔄</div>
+                <div class="lb-close" onclick="closeLB()" title="Tutup">✕</div>
+            </div>
         </div>
         <div id="lbContent">
             <div class="lb-empty">Memuat...</div>
@@ -2694,56 +2697,81 @@
                     return;
                 }
 
-                // Skip bullet movement during shield phase
+                // Shield phase: pause boss AI (no new bullets), but existing bullets keep moving
                 if (!shieldPhaseActive) {
-                    const runnerBottomPx = containerHeight * 0.15;
-                    const runnerTopPx = containerHeight - runnerBottomPx - 120;
-                    const runnerLeftPx = (lanePositions[runnerLane] / 100) * containerWidth;
-                    const runnerHitbox = {
-                        x: runnerLeftPx - 40 + 20,
-                        y: runnerTopPx + 20,
-                        width: 40,
-                        height: 80
-                    };
+                    // Boss shooting logic - only when shield is NOT active
+                    // (bossShootInterval sudah di-clear saat shield activate)
+                }
+                
+                // Bullet movement ALWAYS runs (even during shield phase)
+                const runnerBottomPx = containerHeight * 0.15;
+                const runnerTopPx = containerHeight - runnerBottomPx - 120;
+                const runnerLeftPx = (lanePositions[runnerLane] / 100) * containerWidth;
+                const runnerHitbox = {
+                    x: runnerLeftPx - 40 + 20,
+                    y: runnerTopPx + 20,
+                    width: 40,
+                    height: 80
+                };
 
-                    // Update boss bullets
-                    for (let i = bossBullets.length - 1; i >= 0; i--) {
-                        const b = bossBullets[i];
-                        b.y += BOSS_BULLET_SPEED;
-                        b.element.style.top = b.y + 'px';
+                // Update boss bullets (keep moving)
+                for (let i = bossBullets.length - 1; i >= 0; i--) {
+                    const b = bossBullets[i];
+                    b.y += BOSS_BULLET_SPEED;
+                    b.element.style.top = b.y + 'px';
 
-                        const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
-                        if (rectIntersect(bHitbox, runnerHitbox)) {
-                            createSpark(b.x + 5, b.y + 10);
-                            b.element.remove();
-                            bossBullets.splice(i, 1);
-                            takeBossDamage();
-                            continue;
-                        }
-
-                        if (b.y > containerHeight) {
-                            b.element.remove();
-                            bossBullets.splice(i, 1);
-                        }
+                    const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
+                    if (rectIntersect(bHitbox, runnerHitbox)) {
+                        createSpark(b.x + 5, b.y + 10);
+                        b.element.remove();
+                        bossBullets.splice(i, 1);
+                        takeBossDamage();
+                        continue;
                     }
 
-                    // Update runner bullets
-                    const tank = document.getElementById('bossTank');
-                    const tankRect = tank.getBoundingClientRect();
-                    const containerRect = container.getBoundingClientRect();
-                    const tankHitbox = {
-                        x: tankRect.left - containerRect.left + 10,
-                        y: tankRect.top - containerRect.top + 10,
-                        width: tankRect.width - 20,
-                        height: tankRect.height - 20
-                    };
+                    if (b.y > containerHeight) {
+                        b.element.remove();
+                        bossBullets.splice(i, 1);
+                    }
+                }
 
-                    for (let i = runnerBullets.length - 1; i >= 0; i--) {
-                        const b = runnerBullets[i];
-                        b.y -= RUNNER_BULLET_SPEED;
-                        b.element.style.top = b.y + 'px';
+                // Update runner bullets (keep moving)
+                const tank = document.getElementById('bossTank');
+                const tankRect = tank.getBoundingClientRect();
+                const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+                const tankHitbox = {
+                    x: tankRect.left - containerRect.left + 10,
+                    y: tankRect.top - containerRect.top + 10,
+                    width: tankRect.width - 20,
+                    height: tankRect.height - 20
+                };
 
-                        const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
+                for (let i = runnerBullets.length - 1; i >= 0; i--) {
+                    const b = runnerBullets[i];
+                    b.y -= RUNNER_BULLET_SPEED;
+                    b.element.style.top = b.y + 'px';
+
+                    const bHitbox = { x: b.x, y: b.y, width: b.width, height: b.height };
+                    
+                    // During shield phase, bullets hit shield instead of boss
+                    if (shieldPhaseActive) {
+                        const shieldRect = document.getElementById('bossShield').getBoundingClientRect();
+                        const shieldHitbox = {
+                            x: shieldRect.left - containerRect.left,
+                            y: shieldRect.top - containerRect.top,
+                            width: shieldRect.width,
+                            height: shieldRect.height
+                        };
+                        
+                        if (rectIntersect(bHitbox, shieldHitbox)) {
+                            // Bullet spark on shield
+                            createSpark(b.x + 4, b.y);
+                            b.element.remove();
+                            runnerBullets.splice(i, 1);
+                            continue;
+                        }
+                    } else {
+                        // Normal: bullet hits boss
                         if (rectIntersect(bHitbox, tankHitbox)) {
                             createExplosion(b.x, b.y);
                             b.element.remove();
@@ -2751,11 +2779,11 @@
                             damageBoss();
                             continue;
                         }
+                    }
 
-                        if (b.y < -20) {
-                            b.element.remove();
-                            runnerBullets.splice(i, 1);
-                        }
+                    if (b.y < -20) {
+                        b.element.remove();
+                        runnerBullets.splice(i, 1);
                     }
                 }
 
@@ -3478,13 +3506,32 @@
                 <p style="font-size: 48px; color: #FFD700; margin: 5px 0; font-weight: bold;">
                     ${score}
                 </p>
-                <button class="btn btn-retry" onclick="closeBossDefeatScreen(); startGame();" style="margin-top: 25px;">
-                    COBA LAGI
+                <button class="btn btn-retry" onclick="retryBossFight(); startGame();" style="margin-top: 25px;">
+                    COBA LAGI LAWAN BOSS
                 </button>
             `;
             
             container.appendChild(defeatScreen);
         }
+        
+        function retryBossFight() {
+            // Close defeat screen
+            const screen = document.getElementById('bossDefeatScreen');
+            if (screen) screen.remove();
+            
+            // Reset boss state but keep score and level
+            hearts = MAX_HEARTS;
+            updateHeartsUI();
+            
+            // Clear existing bullets
+            bossBullets.forEach(b => { if (b.element) b.element.remove(); });
+            runnerBullets.forEach(b => { if (b.element) b.element.remove(); });
+            bossBullets = [];
+            runnerBullets = [];
+            
+            // Restart boss fight directly
+            startBossFight();
+        }        
 
         function closeBossDefeatScreen() {
             const screen = document.getElementById('bossDefeatScreen');
@@ -3968,8 +4015,15 @@
         // ================= LEADERBOARD =================
         function openLB() {
             document.getElementById('lbModal').classList.add('active');
+            document.getElementById('lbContent').innerHTML = '<div class="lb-empty">Memuat...</div>';
+            setTimeout(() => loadLB(), 50);
+        }
+        
+        function refreshLB() {
+            document.getElementById('lbContent').innerHTML = '<div class="lb-empty">Memuat...</div>';
             loadLB();
         }
+
         function closeLB() {
             document.getElementById('lbModal').classList.remove('active');
         }
@@ -3980,13 +4034,20 @@
 
             let scores = [];
 
-            // Try GAS
+            // Try GAS - with cache-busting to force fresh data
             if (GAS_READY) {
                 try {
-                    const res = await fetch(GAS_URL + '?action=getScores', { redirect: 'follow' });
+                    const cacheBuster = Date.now();
+                    const res = await fetch(GAS_URL + '?action=getScores&t=' + cacheBuster, { 
+                        redirect: 'follow',
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     if (data.scores) scores = data.scores;
-                } catch(e) { console.log('GAS error:', e); }
+                } catch(e) { 
+                    console.log('GAS error:', e); 
+                }
             }
 
             // Fallback localStorage
@@ -4036,11 +4097,11 @@
                 try {
                     await fetch(GAS_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        cache: 'no-store'
                     });
-                } catch(e) {}
+                } catch(e) { console.log('Save error:', e); }
             }
             return { success: true };
         }
