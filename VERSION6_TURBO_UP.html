@@ -3297,21 +3297,10 @@
             }
 
             if (!victory) {
-                    pauseMusic();
                 const runner = document.getElementById('runner');
                 runner.classList.add('fall');
-
                 setTimeout(() => {
-                    // ============================================
-                    // CUSTOM BOSS GAME OVER SCREEN
-                    // ============================================
-                    
-                    // Hide the normal game over screen first
-                    document.getElementById('gameOverScreen').classList.add('hidden');
-                    
-                    // Show boss-specific defeat screen
                     showBossDefeatScreen();
-                    
                 }, 800);
             }
         }
@@ -3506,7 +3495,7 @@
                 <p style="font-size: 48px; color: #FFD700; margin: 5px 0; font-weight: bold;">
                     ${score}
                 </p>
-                <button class="btn btn-retry" onclick="retryBossFight(); startGame();" style="margin-top: 25px;">
+                <button class="btn btn-retry" onclick="retryBossFight();" style="margin-top: 25px;">
                     COBA LAGI LAWAN BOSS
                 </button>
             `;
@@ -3522,6 +3511,16 @@
             // Reset boss state but keep score and level
             hearts = MAX_HEARTS;
             updateHeartsUI();
+            
+            // Reset runner position and visual state
+            runnerLane = 1;
+            updateRunnerPosition();
+            
+            const runner = document.getElementById('runner');
+            runner.classList.remove('fall', 'shake', 'celebrate');
+            runner.style.opacity = '1';
+            runner.style.transform = 'translateX(-50%)';
+            runner.style.display = 'block';
             
             // Clear existing bullets
             bossBullets.forEach(b => { if (b.element) b.element.remove(); });
