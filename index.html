@@ -708,6 +708,197 @@
             font-size: 14px;
             letter-spacing: 2px;
         }
+
+        /* Pronunciation Button */
+        .pronounce-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--primary);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            margin-left: 8px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pronounce-btn:active {
+            transform: scale(0.85);
+        }
+
+        .pronounce-btn.speaking {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 140, 0, 0.2) 100%);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            animation: soundWave 0.6s ease-in-out infinite;
+        }
+
+        @keyframes soundWave {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 0 12px rgba(255, 215, 0, 0);
+                transform: scale(1.05);
+            }
+        }
+
+        .pronounce-btn .sound-wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .pronounce-btn.speaking .sound-wave {
+            animation: ripple 1s ease-out infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 0.6; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* Example pronounce button - smaller */
+        .example-pronounce {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: var(--primary);
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+        }
+
+        .example-pronounce:active {
+            transform: scale(0.9);
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .example-pronounce.speaking {
+            background: rgba(255, 215, 0, 0.25);
+            animation: soundWave 0.6s ease-in-out infinite;
+        }
+
+        .word-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .word-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .word-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .word-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+
+        /* Word Image */
+        .word-image-container {
+            width: 100%;
+            height: 200px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1f 100%);
+            border: 1px solid var(--border);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .word-image-container:hover img {
+            transform: scale(1.05);
+        }
+
+        .word-image-container .image-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            gap: 8px;
+        }
+
+        .word-image-container .image-placeholder .placeholder-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .word-image-container .image-placeholder .placeholder-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .word-image-container .image-error {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            gap: 6px;
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1f 100%);
+        }
+
+        .word-image-container .image-error .error-icon {
+            font-size: 36px;
+            opacity: 0.4;
+        }
+
+        .word-image-container.has-error .image-error {
+            display: flex;
+        }
+
+        .word-image-container.has-error img {
+            display: none;
+        }
+
     </style>
 <base target="_blank">
 </head>
@@ -1179,22 +1370,52 @@
             list.innerHTML = data.map((item, index) => `
                 <div class="word-card" data-index="${index}" style="animation-delay: ${index * 0.05}s">
                     <div class="word-card-header" onclick="toggleCard(${index})">
-                        <div class="word-main">
-                            <div class="word-char">${item.char}</div>
-                            <div class="word-pinyin">${item.pinyin}</div>
-                            <div class="word-meaning">${item.meaning}</div>
+                        <div class="word-image-container" id="img-container-${index}" onclick="event.stopPropagation();">
+                            <img 
+                                src="images/${item.char}.jpg" 
+                                alt="${item.char}"
+                                onerror="handleImageError(this, '${item.char}')"
+                                loading="lazy"
+                            />
+                            <div class="image-placeholder">
+                                <span class="placeholder-icon">🖼️</span>
+                                <span class="placeholder-text">images/${item.char}.jpg</span>
+                            </div>
+                            <div class="image-error">
+                                <span class="error-icon">🖼️</span>
+                                <span>Gambar tidak ditemukan</span>
+                                <span style="font-size: 10px; opacity: 0.5;">images/${item.char}.jpg</span>
+                            </div>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                            <div class="word-number">${index + 1}</div>
-                            <div class="word-expand-icon" id="icon-${index}">▼</div>
+                        <div class="word-header-row">
+                            <div class="word-left">
+                                <div class="word-title-row">
+                                    <div class="word-char">${item.char}</div>
+                                    <button class="pronounce-btn" onclick="event.stopPropagation(); speakText('${item.char}', this)" title="Dengarkan pengucapan">
+                                        <span class="sound-wave"></span>
+                                        🔊
+                                    </button>
+                                </div>
+                                <div class="word-pinyin">${item.pinyin}</div>
+                                <div class="word-meaning">${item.meaning}</div>
+                            </div>
+                            <div class="word-right">
+                                <div class="word-number">${index + 1}</div>
+                                <div class="word-expand-icon" id="icon-${index}">▼</div>
+                            </div>
                         </div>
                     </div>
                     <div class="word-details" id="details-${index}">
                         <div class="detail-section">
                             <div class="detail-label">📖 Contoh Kalimat</div>
-                            ${item.examples.map(ex => `
+                            ${item.examples.map((ex, exIndex) => `
                                 <div class="example-box">
-                                    <div class="example-chinese">${ex.cn}</div>
+                                    <div class="example-chinese">
+                                        ${ex.cn}
+                                        <button class="example-pronounce" onclick="event.stopPropagation(); speakText('${ex.cn.replace(/'/g, "\'")}', this)" title="Dengarkan contoh kalimat">
+                                            🔊
+                                        </button>
+                                    </div>
                                     <div class="example-pinyin">${ex.py}</div>
                                     <div class="example-indo">${ex.id}</div>
                                 </div>
@@ -1258,6 +1479,78 @@
             input.value = '';
             handleSearch('');
             input.focus();
+        }
+
+        // ================= PRONUNCIATION =================
+        let currentSpeakingBtn = null;
+
+        function speakText(text, btnElement) {
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+
+            // Remove speaking class from previous button
+            if (currentSpeakingBtn) {
+                currentSpeakingBtn.classList.remove('speaking');
+            }
+
+            // Check if browser supports speech synthesis
+            if (!window.speechSynthesis) {
+                alert('Browser Anda tidak mendukung fitur pengucapan suara.');
+                return;
+            }
+
+            // Create utterance
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+
+            // Add speaking visual feedback
+            if (btnElement) {
+                btnElement.classList.add('speaking');
+                currentSpeakingBtn = btnElement;
+            }
+
+            // Remove speaking class when done
+            utterance.onend = () => {
+                if (btnElement) {
+                    btnElement.classList.remove('speaking');
+                }
+                if (currentSpeakingBtn === btnElement) {
+                    currentSpeakingBtn = null;
+                }
+            };
+
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                if (btnElement) {
+                    btnElement.classList.remove('speaking');
+                }
+                if (currentSpeakingBtn === btnElement) {
+                    currentSpeakingBtn = null;
+                }
+            };
+
+            // Speak the text
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ================= IMAGE HANDLER =================
+        function handleImageError(img, charName) {
+            const container = img.closest('.word-image-container');
+            if (container) {
+                container.classList.add('has-error');
+            }
+            // Try PNG fallback
+            if (img.src.endsWith('.jpg')) {
+                img.src = `images/${charName}.png`;
+                img.onerror = () => {
+                    if (container) {
+                        container.classList.add('has-error');
+                    }
+                };
+            }
         }
 
         // ================= INIT =================
